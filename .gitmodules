@@ -1,0 +1,3 @@
+[submodule "chaldea-data"]
+	path = chaldea-data
+	url = https://github.com/chaldea-center/chaldea-data.git
