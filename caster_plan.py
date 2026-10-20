@@ -306,6 +306,102 @@ def greedy_plan(people: list[dict], coef: list[float], rule: str,
     }
 
 
+def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: int = 2) -> dict:
+    """随机重启版贪心：每步在吞吐前 topk 里随机挑一个，跳出确定性贪心的局部最优。
+
+    与 greedy_plan 结构一致，只是选择带随机性；多次不同 seed 取总场次最小者，
+    就是报告里用的最优解。
+    """
+    import random
+
+    rng = random.Random(seed)
+    combos = equip_combinations(len(coef))
+    bonus_table = [
+        [sum(people[i]["hits"][j] * en[j] * coef[j] for j in range(len(coef))) for en in combos]
+        for i in range(len(people))
+    ]
+    needs = [p["need"] for p in people]
+    alive = list(range(len(people)))
+    lefts = [float(r["need"]) for r in RUNNERS]
+    fixed = FIXED_BONUS + RUNNER_BONUS * sum(1 for v in lefts if v <= 0)
+    rounds = []
+    total_runs = 0
+    while alive and len(rounds) < MAX_ROUNDS:
+        candidates = []
+        for size in range(min(3, len(alive)), 0, -1):
+            for chosen in combinations(alive, size):
+                cost = sum(people[i]["cost"] for i in chosen)
+                n5 = 1 if cost == N5_COST else 0
+                for k, en in enumerate(combos):
+                    equip_count = sum(en) + n5
+                    if cost + EQUIP_COST * equip_count > COST_CAP - COST_BASE:
+                        continue
+                    gains = [BASE_BOND * (fixed + n5 * N5_BONUS + bonus_table[i][k]) for i in chosen]
+                    ratios = [g / needs[i] if needs[i] > 0 else 0.0 for g, i in zip(gains, chosen)]
+                    runs = math.ceil(1 / max(ratios)) if max(ratios) else 0
+                    if runs <= 0:
+                        continue
+                    pushed = sum(min(g * runs, needs[i]) for g, i in zip(gains, chosen))
+                    candidates.append(
+                        ((-round(pushed / runs, 6), runs),
+                         {"chosen": list(chosen), "enabled": en, "gains": gains, "runs": runs, "n5": n5,
+                          "cost": cost, "equip_count": equip_count,
+                          "total_cost": COST_BASE + cost + EQUIP_COST * equip_count})
+                    )
+            if candidates:
+                break
+        if not candidates:
+            break
+        candidates.sort(key=lambda item: item[0])
+        step = rng.choice(candidates[:topk])[1]
+        chosen = step["chosen"]
+        runs = step["runs"]
+        before = {i: needs[i] for i in chosen}
+        meta = evaluate(chosen, step["enabled"], people, coef, needs, fixed) or {}
+        leftover, graduated = {}, []
+        for index, i in enumerate(chosen):
+            needs[i] -= step["gains"][index] * runs
+            leftover[i] = needs[i]
+            if needs[i] <= 0:
+                graduated.append(i)
+        item = {
+            "index": len(rounds) + 1,
+            "chosen": chosen,
+            "size": len(chosen),
+            "max_fit": max_feasible_size(people, alive),
+            "enabled": step["enabled"],
+            "cost": step["cost"],
+            "equip_count": step["equip_count"],
+            "total_cost": step["total_cost"],
+            "n5": step["n5"],
+            "runs": runs,
+            "gains": step["gains"],
+            "before": before,
+            "leftover": leftover,
+            "graduated": graduated,
+            "alive_after": len(alive) - len(graduated),
+            "fixed": fixed,
+            "loss": meta.get("loss", 0.0),
+            "p3": meta.get("p3", 0.0),
+            "r3": meta.get("r3", 0.0),
+            "throughput": meta.get("throughput", 0.0),
+        }
+        fixed = apply_runners(lefts, runs, item["enabled"], coef, fixed, item)
+        rounds.append(item)
+        total_runs += runs
+        alive = [i for i in alive if needs[i] > 0]
+    return {
+        "rule": "throughput",
+        "rounds": rounds,
+        "total_runs": total_runs,
+        "needs": needs,
+        "seed": seed,
+        "finished": not alive,
+        "remaining": alive,
+        "runner_lefts": lefts,
+    }
+
+
 def runner_gain(runner: dict, enabled: list[int], coef: list[float]) -> float:
     """陪跑者单场收益：前排固定区 2.08 + 她命中的已启用礼装。"""
     bonus = sum(runner["hits"][j] * enabled[j] * coef[j] for j in range(len(coef)))
@@ -495,7 +591,8 @@ def render_section(entry: dict, people: list[dict], coef: list[float], labels: l
     return f"""
       <section class=panel>
         <h2>{html.escape(title)} <span class=dim>（{html.escape(entry['rule'])}）</span></h2>
-        <p class=sub2>{html.escape(desc)}</p>
+        <p class=sub2>{html.escape(desc)}
+          {'　·　随机重启 ' + str(plan['restarts']) + ' 次，最优 seed ' + str(plan.get('seed')) if plan.get('restarts') else ''}</p>
         <div class=cards>
           <div class=card><div class=k>总轮次</div><div class=v>{len(plan['rounds'])}</div></div>
           <div class=card><div class=k>总场次</div><div class=v>{plan['total_runs']}<span class=u>场</span></div></div>
@@ -564,6 +661,8 @@ def main() -> None:
                         help="额外尝试「按陪跑收益重排轮次」（实测会让总场次变差，仅用于对比）")
     parser.add_argument("--cost-first", action="store_true",
                         help="同等吞吐下优先上高 cost 从者，把 3★ 留给后面的三人编队")
+    parser.add_argument("--restarts", type=int, default=40,
+                        help="throughput 准则的随机重启次数（0 = 纯确定性贪心）")
     args = parser.parse_args()
 
     global P3_WEIGHT, R3_WEIGHT, COST_FIRST
@@ -580,6 +679,18 @@ def main() -> None:
     runner_needs = [args.runner_need, args.runner2_need]
     entries = []
     for rule in rules:
+        if rule == "throughput" and args.restarts > 0:
+            best = None
+            for seed in range(args.restarts):
+                candidate = randomized_greedy(people, coef, seed, topk=2)
+                if candidate["finished"] and (best is None or candidate["total_runs"] < best["total_runs"]):
+                    best = candidate
+            if best is not None:
+                plan = finalize(best["rounds"], best["needs"], rule, best.get("runner_lefts"))
+                plan["restarts"] = args.restarts
+                plan["seed"] = best.get("seed")
+                entries.append({"rule": rule, "plan": plan})
+                continue
         base = greedy_plan(people, coef, rule, runner_needs)
         if args.reorder:
             ordered = reorder_for_runner(people, coef, base["rounds"], runner_needs, rule)
