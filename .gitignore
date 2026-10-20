@@ -5,3 +5,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Excel 临时锁文件
+~$*

@@ -4,15 +4,15 @@
   "rankCounts": {
     "15": 1,
     "14": 6,
-    "13": 4,
-    "12": 10,
+    "13": 5,
+    "12": 9,
     "11": 15,
     "10": 45,
-    "9": 25,
+    "9": 31,
     "8": 25,
     "7": 33,
     "6": 52,
-    "5": 117,
+    "5": 111,
     "2": 2,
     "1": 1,
     "0": 114
@@ -44,15 +44,15 @@
       "svtId": 500800,
       "name": "梅林",
       "bondRank": 14,
-      "bondPoints": 8087409,
+      "bondPoints": 8140875,
       "bondExceedCount": 5,
       "maxRank": 16,
       "nextRank": 15,
       "currentThreshold": 6875000,
       "nextThreshold": 8515000,
-      "pointsIntoLevel": 1212409,
-      "pointsToNext": 427591,
-      "progress": 0.7393,
+      "pointsIntoLevel": 1265875,
+      "pointsToNext": 374125,
+      "progress": 0.7719,
       "bondEquips": [
         {
           "id": 9301550,
@@ -170,19 +170,40 @@
       "svtId": 901400,
       "name": "斯卡哈·斯卡蒂",
       "bondRank": 13,
-      "bondPoints": 5743718,
+      "bondPoints": 5986070,
       "bondExceedCount": 4,
       "maxRank": 16,
       "nextRank": 14,
       "currentThreshold": 5286000,
       "nextThreshold": 6786000,
-      "pointsIntoLevel": 457718,
-      "pointsToNext": 1042282,
-      "progress": 0.3051,
+      "pointsIntoLevel": 700070,
+      "pointsToNext": 799930,
+      "progress": 0.4667,
       "bondEquips": [
         {
           "id": 9306510,
           "name": "恩克洛米亚的暗泪"
+        }
+      ]
+    },
+    {
+      "collectionNo": 210,
+      "svtId": 603300,
+      "name": "冈田以藏",
+      "bondRank": 13,
+      "bondPoints": 5718876,
+      "bondExceedCount": 4,
+      "maxRank": 16,
+      "nextRank": 14,
+      "currentThreshold": 5080000,
+      "nextThreshold": 6580000,
+      "pointsIntoLevel": 638876,
+      "pointsToNext": 861124,
+      "progress": 0.4259,
+      "bondEquips": [
+        {
+          "id": 9302820,
+          "name": "那日的天空"
         }
       ]
     },
@@ -334,27 +355,6 @@
       ]
     },
     {
-      "collectionNo": 210,
-      "svtId": 603300,
-      "name": "冈田以藏",
-      "bondRank": 12,
-      "bondPoints": 3977953,
-      "bondExceedCount": 3,
-      "maxRank": 16,
-      "nextRank": 13,
-      "currentThreshold": 3720000,
-      "nextThreshold": 5080000,
-      "pointsIntoLevel": 257953,
-      "pointsToNext": 1102047,
-      "progress": 0.1897,
-      "bondEquips": [
-        {
-          "id": 9302820,
-          "name": "那日的天空"
-        }
-      ]
-    },
-    {
       "collectionNo": 431,
       "svtId": 2800900,
       "name": "Phantasmoon",
@@ -376,6 +376,31 @@
       ]
     },
     {
+      "collectionNo": 1,
+      "svtId": 800100,
+      "name": "玛修·基列莱特",
+      "bondRank": 12,
+      "bondPoints": 3918607,
+      "bondExceedCount": 8,
+      "maxRank": 16,
+      "nextRank": 13,
+      "currentThreshold": 3787000,
+      "nextThreshold": 5147000,
+      "pointsIntoLevel": 131607,
+      "pointsToNext": 1228393,
+      "progress": 0.0968,
+      "bondEquips": [
+        {
+          "id": 9309050,
+          "name": "获赠的尊贵十字之盾面"
+        },
+        {
+          "id": 9311670,
+          "name": "向着约定的未来"
+        }
+      ]
+    },
+    {
       "collectionNo": 320,
       "svtId": 901200,
       "name": "莱昂纳多·达·芬奇",
@@ -393,31 +418,6 @@
         {
           "id": 9305700,
           "name": "夏日冒险回忆"
-        }
-      ]
-    },
-    {
-      "collectionNo": 1,
-      "svtId": 800100,
-      "name": "玛修·基列莱特",
-      "bondRank": 12,
-      "bondPoints": 3807656,
-      "bondExceedCount": 8,
-      "maxRank": 16,
-      "nextRank": 13,
-      "currentThreshold": 3787000,
-      "nextThreshold": 5147000,
-      "pointsIntoLevel": 20656,
-      "pointsToNext": 1339344,
-      "progress": 0.0152,
-      "bondEquips": [
-        {
-          "id": 9309050,
-          "name": "获赠的尊贵十字之盾面"
-        },
-        {
-          "id": 9311670,
-          "name": "向着约定的未来"
         }
       ]
     },
@@ -468,15 +468,15 @@
       "svtId": 4000100,
       "name": "Ｕ－奥尔加玛丽",
       "bondRank": 11,
-      "bondPoints": 3809253,
+      "bondPoints": 3862352,
       "bondExceedCount": 2,
       "maxRank": 16,
       "nextRank": 12,
       "currentThreshold": 2745000,
       "nextThreshold": 3975000,
-      "pointsIntoLevel": 1064253,
-      "pointsToNext": 165747,
-      "progress": 0.8652,
+      "pointsIntoLevel": 1117352,
+      "pointsToNext": 112648,
+      "progress": 0.9084,
       "bondEquips": [
         {
           "id": 9310440,
@@ -489,15 +489,15 @@
       "svtId": 604200,
       "name": "光之高扬斯卡娅",
       "bondRank": 11,
-      "bondPoints": 3343424,
+      "bondPoints": 3355698,
       "bondExceedCount": 2,
       "maxRank": 16,
       "nextRank": 12,
       "currentThreshold": 2738000,
       "nextThreshold": 3968000,
-      "pointsIntoLevel": 605424,
-      "pointsToNext": 624576,
-      "progress": 0.4922,
+      "pointsIntoLevel": 617698,
+      "pointsToNext": 612302,
+      "progress": 0.5022,
       "bondEquips": [
         {
           "id": 9305710,
@@ -989,6 +989,27 @@
       ]
     },
     {
+      "collectionNo": 239,
+      "svtId": 603700,
+      "name": "迦摩",
+      "bondRank": 10,
+      "bondPoints": 2030804,
+      "bondExceedCount": 1,
+      "maxRank": 16,
+      "nextRank": 11,
+      "currentThreshold": 1685000,
+      "nextThreshold": 2775000,
+      "pointsIntoLevel": 345804,
+      "pointsToNext": 744196,
+      "progress": 0.3173,
+      "bondEquips": [
+        {
+          "id": 9303610,
+          "name": "花之矢"
+        }
+      ]
+    },
+    {
       "collectionNo": 64,
       "svtId": 301600,
       "name": "赫克托耳",
@@ -1111,27 +1132,6 @@
         {
           "id": 9300920,
           "name": "孤身一人的战争"
-        }
-      ]
-    },
-    {
-      "collectionNo": 239,
-      "svtId": 603700,
-      "name": "迦摩",
-      "bondRank": 10,
-      "bondPoints": 1857530,
-      "bondExceedCount": 1,
-      "maxRank": 16,
-      "nextRank": 11,
-      "currentThreshold": 1685000,
-      "nextThreshold": 2775000,
-      "pointsIntoLevel": 172530,
-      "pointsToNext": 917470,
-      "progress": 0.1583,
-      "bondEquips": [
-        {
-          "id": 9303610,
-          "name": "花之矢"
         }
       ]
     },
@@ -1850,6 +1850,27 @@
       ]
     },
     {
+      "collectionNo": 112,
+      "svtId": 602100,
+      "name": "酒吞童子",
+      "bondRank": 9,
+      "bondPoints": 1270385,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 10,
+      "currentThreshold": 1270000,
+      "nextThreshold": 1680000,
+      "pointsIntoLevel": 385,
+      "pointsToNext": 409615,
+      "progress": 0.0009,
+      "bondEquips": [
+        {
+          "id": 9301180,
+          "name": "神便鬼毒酒"
+        }
+      ]
+    },
+    {
       "collectionNo": 73,
       "svtId": 402200,
       "name": "阿尔托莉雅·潘德拉贡〔圣诞Alter〕",
@@ -1934,6 +1955,48 @@
       ]
     },
     {
+      "collectionNo": 41,
+      "svtId": 601000,
+      "name": "斯忒诺",
+      "bondRank": 9,
+      "bondPoints": 1201831,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 10,
+      "currentThreshold": 1190000,
+      "nextThreshold": 1505000,
+      "pointsIntoLevel": 11831,
+      "pointsToNext": 303169,
+      "progress": 0.0376,
+      "bondEquips": [
+        {
+          "id": 9300250,
+          "name": "女神的闪耀"
+        }
+      ]
+    },
+    {
+      "collectionNo": 235,
+      "svtId": 603600,
+      "name": "李书文",
+      "bondRank": 9,
+      "bondPoints": 1199858,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 10,
+      "currentThreshold": 1198600,
+      "nextThreshold": 1630000,
+      "pointsIntoLevel": 1258,
+      "pointsToNext": 430142,
+      "progress": 0.0029,
+      "bondEquips": [
+        {
+          "id": 9303480,
+          "name": "老当益壮"
+        }
+      ]
+    },
+    {
       "collectionNo": 238,
       "svtId": 1000900,
       "name": "Kingprotea",
@@ -1972,6 +2035,27 @@
         {
           "id": 9300150,
           "name": "他赐予的杖"
+        }
+      ]
+    },
+    {
+      "collectionNo": 252,
+      "svtId": 303800,
+      "name": "长尾景虎",
+      "bondRank": 9,
+      "bondPoints": 1191419,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 10,
+      "currentThreshold": 1190000,
+      "nextThreshold": 1505000,
+      "pointsIntoLevel": 1419,
+      "pointsToNext": 313581,
+      "progress": 0.0045,
+      "bondEquips": [
+        {
+          "id": 9303770,
+          "name": "刀八毗沙门天"
         }
       ]
     },
@@ -2035,6 +2119,48 @@
         {
           "id": 9306970,
           "name": "无暇辞世"
+        }
+      ]
+    },
+    {
+      "collectionNo": 117,
+      "svtId": 601900,
+      "name": "风魔小太郎",
+      "bondRank": 9,
+      "bondPoints": 1142403,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 10,
+      "currentThreshold": 1120000,
+      "nextThreshold": 1377000,
+      "pointsIntoLevel": 22403,
+      "pointsToNext": 234597,
+      "progress": 0.0872,
+      "bondEquips": [
+        {
+          "id": 9301260,
+          "name": "鬼之面具"
+        }
+      ]
+    },
+    {
+      "collectionNo": 124,
+      "svtId": 600900,
+      "name": "静谧哈桑",
+      "bondRank": 9,
+      "bondPoints": 1137464,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 10,
+      "currentThreshold": 1120000,
+      "nextThreshold": 1377000,
+      "pointsIntoLevel": 17464,
+      "pointsToNext": 239536,
+      "progress": 0.068,
+      "bondEquips": [
+        {
+          "id": 9301370,
+          "name": "存在的证明"
         }
       ]
     },
@@ -2312,27 +2438,6 @@
       ]
     },
     {
-      "collectionNo": 252,
-      "svtId": 303800,
-      "name": "长尾景虎",
-      "bondRank": 8,
-      "bondPoints": 1133675,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 9,
-      "currentThreshold": 880500,
-      "nextThreshold": 1190000,
-      "pointsIntoLevel": 253175,
-      "pointsToNext": 56325,
-      "progress": 0.818,
-      "bondEquips": [
-        {
-          "id": 9303770,
-          "name": "刀八毗沙门天"
-        }
-      ]
-    },
-    {
       "collectionNo": 268,
       "svtId": 1100900,
       "name": "太空伊什塔尔",
@@ -2354,6 +2459,27 @@
       ]
     },
     {
+      "collectionNo": 110,
+      "svtId": 600300,
+      "name": "百貌哈桑",
+      "bondRank": 8,
+      "bondPoints": 1059630,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 9,
+      "currentThreshold": 790000,
+      "nextThreshold": 1060000,
+      "pointsIntoLevel": 269630,
+      "pointsToNext": 370,
+      "progress": 0.9986,
+      "bondEquips": [
+        {
+          "id": 9301090,
+          "name": "百人藏书"
+        }
+      ]
+    },
+    {
       "collectionNo": 189,
       "svtId": 603100,
       "name": "刑部姬",
@@ -2371,27 +2497,6 @@
         {
           "id": 9302500,
           "name": "公主殿下的折纸"
-        }
-      ]
-    },
-    {
-      "collectionNo": 117,
-      "svtId": 601900,
-      "name": "风魔小太郎",
-      "bondRank": 8,
-      "bondPoints": 969117,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 9,
-      "currentThreshold": 850000,
-      "nextThreshold": 1120000,
-      "pointsIntoLevel": 119117,
-      "pointsToNext": 150883,
-      "progress": 0.4412,
-      "bondEquips": [
-        {
-          "id": 9301260,
-          "name": "鬼之面具"
         }
       ]
     },
@@ -2753,6 +2858,27 @@
       ]
     },
     {
+      "collectionNo": 424,
+      "svtId": 2300700,
+      "name": "岸波白野",
+      "bondRank": 8,
+      "bondPoints": 780837,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 9,
+      "currentThreshold": 730000,
+      "nextThreshold": 1080000,
+      "pointsIntoLevel": 50837,
+      "pointsToNext": 299163,
+      "progress": 0.1452,
+      "bondEquips": [
+        {
+          "id": 9308800,
+          "name": "作为毕业的证明"
+        }
+      ]
+    },
+    {
       "collectionNo": 24,
       "svtId": 400600,
       "name": "乔尔乔斯",
@@ -2858,6 +2984,27 @@
       ]
     },
     {
+      "collectionNo": 432,
+      "svtId": 106100,
+      "name": "理查一世",
+      "bondRank": 7,
+      "bondPoints": 802466,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 8,
+      "currentThreshold": 540000,
+      "nextThreshold": 840000,
+      "pointsIntoLevel": 262466,
+      "pointsToNext": 37534,
+      "progress": 0.8749,
+      "bondEquips": [
+        {
+          "id": 9308910,
+          "name": "三头狮子、三个影子的女儿们"
+        }
+      ]
+    },
+    {
       "collectionNo": 204,
       "svtId": 1100600,
       "name": "安东尼奥·萨列里",
@@ -2896,6 +3043,27 @@
         {
           "id": 9300650,
           "name": "黑头盔"
+        }
+      ]
+    },
+    {
+      "collectionNo": 305,
+      "svtId": 901100,
+      "name": "阿摩耳〔卡莲〕",
+      "bondRank": 7,
+      "bondPoints": 767888,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 8,
+      "currentThreshold": 600000,
+      "nextThreshold": 940000,
+      "pointsIntoLevel": 167888,
+      "pointsToNext": 172112,
+      "progress": 0.4938,
+      "bondEquips": [
+        {
+          "id": 9305480,
+          "name": "对春咏歌"
         }
       ]
     },
@@ -2984,23 +3152,65 @@
       ]
     },
     {
-      "collectionNo": 124,
-      "svtId": 600900,
-      "name": "静谧哈桑",
+      "collectionNo": 426,
+      "svtId": 1001800,
+      "name": "Kazuradrop",
       "bondRank": 7,
-      "bondPoints": 735882,
+      "bondPoints": 735461,
       "bondExceedCount": 0,
       "maxRank": 16,
       "nextRank": 8,
-      "currentThreshold": 570000,
-      "nextThreshold": 850000,
-      "pointsIntoLevel": 165882,
-      "pointsToNext": 114118,
-      "progress": 0.5924,
+      "currentThreshold": 650000,
+      "nextThreshold": 980000,
+      "pointsIntoLevel": 85461,
+      "pointsToNext": 244539,
+      "progress": 0.259,
       "bondEquips": [
         {
-          "id": 9301370,
-          "name": "存在的证明"
+          "id": 9308820,
+          "name": "足洗邸中闲暇片刻"
+        }
+      ]
+    },
+    {
+      "collectionNo": 142,
+      "svtId": 202000,
+      "name": "伊什塔尔",
+      "bondRank": 7,
+      "bondPoints": 733256,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 8,
+      "currentThreshold": 680000,
+      "nextThreshold": 1020000,
+      "pointsIntoLevel": 53256,
+      "pointsToNext": 286744,
+      "progress": 0.1566,
+      "bondEquips": [
+        {
+          "id": 9301470,
+          "name": "七头战锤希塔"
+        }
+      ]
+    },
+    {
+      "collectionNo": 3,
+      "svtId": 100200,
+      "name": "阿尔托莉雅·潘德拉贡〔Alter〕",
+      "bondRank": 7,
+      "bondPoints": 732135,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 8,
+      "currentThreshold": 565000,
+      "nextThreshold": 880000,
+      "pointsIntoLevel": 167135,
+      "pointsToNext": 147865,
+      "progress": 0.5306,
+      "bondEquips": [
+        {
+          "id": 9300050,
+          "name": "龙之记忆"
         }
       ]
     },
@@ -3022,27 +3232,6 @@
         {
           "id": 9301690,
           "name": "不能移开视线"
-        }
-      ]
-    },
-    {
-      "collectionNo": 305,
-      "svtId": 901100,
-      "name": "阿摩耳〔卡莲〕",
-      "bondRank": 7,
-      "bondPoints": 708379,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 8,
-      "currentThreshold": 600000,
-      "nextThreshold": 940000,
-      "pointsIntoLevel": 108379,
-      "pointsToNext": 231621,
-      "progress": 0.3188,
-      "bondEquips": [
-        {
-          "id": 9305480,
-          "name": "对春咏歌"
         }
       ]
     },
@@ -3110,27 +3299,6 @@
       ]
     },
     {
-      "collectionNo": 426,
-      "svtId": 1001800,
-      "name": "Kazuradrop",
-      "bondRank": 7,
-      "bondPoints": 671256,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 8,
-      "currentThreshold": 650000,
-      "nextThreshold": 980000,
-      "pointsIntoLevel": 21256,
-      "pointsToNext": 308744,
-      "progress": 0.0644,
-      "bondEquips": [
-        {
-          "id": 9308820,
-          "name": "足洗邸中闲暇片刻"
-        }
-      ]
-    },
-    {
       "collectionNo": 135,
       "svtId": 900400,
       "name": "玛尔达",
@@ -3148,6 +3316,27 @@
         {
           "id": 9301410,
           "name": "神圣拳套"
+        }
+      ]
+    },
+    {
+      "collectionNo": 329,
+      "svtId": 305000,
+      "name": "坂本龙马",
+      "bondRank": 7,
+      "bondPoints": 645977,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 8,
+      "currentThreshold": 500000,
+      "nextThreshold": 800000,
+      "pointsIntoLevel": 145977,
+      "pointsToNext": 154023,
+      "progress": 0.4866,
+      "bondEquips": [
+        {
+          "id": 9306220,
+          "name": "发生于某片海中之事"
         }
       ]
     },
@@ -3215,27 +3404,6 @@
       ]
     },
     {
-      "collectionNo": 329,
-      "svtId": 305000,
-      "name": "坂本龙马",
-      "bondRank": 7,
-      "bondPoints": 601759,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 8,
-      "currentThreshold": 500000,
-      "nextThreshold": 800000,
-      "pointsIntoLevel": 101759,
-      "pointsToNext": 198241,
-      "progress": 0.3392,
-      "bondEquips": [
-        {
-          "id": 9306220,
-          "name": "发生于某片海中之事"
-        }
-      ]
-    },
-    {
       "collectionNo": 394,
       "svtId": 205000,
       "name": "托勒密",
@@ -3257,23 +3425,23 @@
       ]
     },
     {
-      "collectionNo": 432,
-      "svtId": 106100,
-      "name": "理查一世",
+      "collectionNo": 170,
+      "svtId": 602700,
+      "name": "武则天",
       "bondRank": 7,
-      "bondPoints": 592925,
+      "bondPoints": 588833,
       "bondExceedCount": 0,
       "maxRank": 16,
       "nextRank": 8,
-      "currentThreshold": 540000,
-      "nextThreshold": 840000,
-      "pointsIntoLevel": 52925,
-      "pointsToNext": 247075,
-      "progress": 0.1764,
+      "currentThreshold": 460000,
+      "nextThreshold": 730000,
+      "pointsIntoLevel": 128833,
+      "pointsToNext": 141167,
+      "progress": 0.4772,
       "bondEquips": [
         {
-          "id": 9308910,
-          "name": "三头狮子、三个影子的女儿们"
+          "id": 9301730,
+          "name": "洛阳的宫殿"
         }
       ]
     },
@@ -3341,27 +3509,6 @@
       ]
     },
     {
-      "collectionNo": 424,
-      "svtId": 2300700,
-      "name": "岸波白野",
-      "bondRank": 7,
-      "bondPoints": 571296,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 8,
-      "currentThreshold": 460000,
-      "nextThreshold": 730000,
-      "pointsIntoLevel": 111296,
-      "pointsToNext": 158704,
-      "progress": 0.4122,
-      "bondEquips": [
-        {
-          "id": 9308800,
-          "name": "作为毕业的证明"
-        }
-      ]
-    },
-    {
       "collectionNo": 341,
       "svtId": 304900,
       "name": "玛丽·安宁",
@@ -3404,27 +3551,6 @@
       ]
     },
     {
-      "collectionNo": 170,
-      "svtId": 602700,
-      "name": "武则天",
-      "bondRank": 7,
-      "bondPoints": 519959,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 8,
-      "currentThreshold": 460000,
-      "nextThreshold": 730000,
-      "pointsIntoLevel": 59959,
-      "pointsToNext": 210041,
-      "progress": 0.2221,
-      "bondEquips": [
-        {
-          "id": 9301730,
-          "name": "洛阳的宫殿"
-        }
-      ]
-    },
-    {
       "collectionNo": 82,
       "svtId": 700400,
       "name": "弗兰肯斯坦",
@@ -3463,27 +3589,6 @@
         {
           "id": 9303700,
           "name": "被传颂的一箭"
-        }
-      ]
-    },
-    {
-      "collectionNo": 142,
-      "svtId": 202000,
-      "name": "伊什塔尔",
-      "bondRank": 6,
-      "bondPoints": 679420,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 7,
-      "currentThreshold": 320000,
-      "nextThreshold": 680000,
-      "pointsIntoLevel": 359420,
-      "pointsToNext": 580,
-      "progress": 0.9984,
-      "bondEquips": [
-        {
-          "id": 9301470,
-          "name": "七头战锤希塔"
         }
       ]
     },
@@ -3547,27 +3652,6 @@
         {
           "id": 9302860,
           "name": "神铁之盾"
-        }
-      ]
-    },
-    {
-      "collectionNo": 3,
-      "svtId": 100200,
-      "name": "阿尔托莉雅·潘德拉贡〔Alter〕",
-      "bondRank": 6,
-      "bondPoints": 486591,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 7,
-      "currentThreshold": 200000,
-      "nextThreshold": 565000,
-      "pointsIntoLevel": 286591,
-      "pointsToNext": 78409,
-      "progress": 0.7852,
-      "bondEquips": [
-        {
-          "id": 9300050,
-          "name": "龙之记忆"
         }
       ]
     },
@@ -3719,6 +3803,27 @@
       ]
     },
     {
+      "collectionNo": 159,
+      "svtId": 602600,
+      "name": "燕青",
+      "bondRank": 6,
+      "bondPoints": 389598,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 7,
+      "currentThreshold": 190000,
+      "nextThreshold": 530000,
+      "pointsIntoLevel": 199598,
+      "pointsToNext": 140402,
+      "progress": 0.5871,
+      "bondEquips": [
+        {
+          "id": 9301630,
+          "name": "百八魔星"
+        }
+      ]
+    },
+    {
       "collectionNo": 192,
       "svtId": 503300,
       "name": "喀耳刻",
@@ -3757,6 +3862,27 @@
         {
           "id": 9307260,
           "name": "终末之火"
+        }
+      ]
+    },
+    {
+      "collectionNo": 304,
+      "svtId": 604100,
+      "name": "鬼一法眼",
+      "bondRank": 6,
+      "bondPoints": 363284,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 7,
+      "currentThreshold": 200000,
+      "nextThreshold": 565000,
+      "pointsIntoLevel": 163284,
+      "pointsToNext": 201716,
+      "progress": 0.4474,
+      "bondEquips": [
+        {
+          "id": 9305450,
+          "name": "鬼一的高齿屐"
         }
       ]
     },
@@ -3803,23 +3929,23 @@
       ]
     },
     {
-      "collectionNo": 110,
-      "svtId": 600300,
-      "name": "百貌哈桑",
+      "collectionNo": 104,
+      "svtId": 501600,
+      "name": "杰罗尼莫",
       "bondRank": 6,
-      "bondPoints": 352924,
+      "bondPoints": 354602,
       "bondExceedCount": 0,
       "maxRank": 16,
       "nextRank": 7,
-      "currentThreshold": 130000,
-      "nextThreshold": 500000,
-      "pointsIntoLevel": 222924,
-      "pointsToNext": 147076,
-      "progress": 0.6025,
+      "currentThreshold": 270000,
+      "nextThreshold": 570000,
+      "pointsIntoLevel": 84602,
+      "pointsToNext": 215398,
+      "progress": 0.282,
       "bondEquips": [
         {
-          "id": 9301090,
-          "name": "百人藏书"
+          "id": 9301070,
+          "name": "这片大地的精灵"
         }
       ]
     },
@@ -4013,23 +4139,23 @@
       ]
     },
     {
-      "collectionNo": 104,
-      "svtId": 501600,
-      "name": "杰罗尼莫",
+      "collectionNo": 22,
+      "svtId": 301000,
+      "name": "罗穆路斯",
       "bondRank": 6,
-      "bondPoints": 317431,
+      "bondPoints": 317624,
       "bondExceedCount": 0,
       "maxRank": 16,
       "nextRank": 7,
-      "currentThreshold": 270000,
-      "nextThreshold": 570000,
-      "pointsIntoLevel": 47431,
-      "pointsToNext": 252569,
-      "progress": 0.1581,
+      "currentThreshold": 180000,
+      "nextThreshold": 540000,
+      "pointsIntoLevel": 137624,
+      "pointsToNext": 222376,
+      "progress": 0.3823,
       "bondEquips": [
         {
-          "id": 9301070,
-          "name": "这片大地的精灵"
+          "id": 9300670,
+          "name": "罗马"
         }
       ]
     },
@@ -4286,6 +4412,27 @@
       ]
     },
     {
+      "collectionNo": 230,
+      "svtId": 603500,
+      "name": "虞美人",
+      "bondRank": 6,
+      "bondPoints": 239945,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 7,
+      "currentThreshold": 200000,
+      "nextThreshold": 600000,
+      "pointsIntoLevel": 39945,
+      "pointsToNext": 360055,
+      "progress": 0.0999,
+      "bondEquips": [
+        {
+          "id": 9303460,
+          "name": "未读完的书"
+        }
+      ]
+    },
+    {
       "collectionNo": 437,
       "svtId": 2801000,
       "name": "但丁·阿利吉耶里",
@@ -4324,27 +4471,6 @@
         {
           "id": 9310480,
           "name": "咦？　难道说"
-        }
-      ]
-    },
-    {
-      "collectionNo": 22,
-      "svtId": 301000,
-      "name": "罗穆路斯",
-      "bondRank": 6,
-      "bondPoints": 231449,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 7,
-      "currentThreshold": 180000,
-      "nextThreshold": 540000,
-      "pointsIntoLevel": 51449,
-      "pointsToNext": 308551,
-      "progress": 0.1429,
-      "bondEquips": [
-        {
-          "id": 9300670,
-          "name": "罗马"
         }
       ]
     },
@@ -4496,6 +4622,27 @@
       ]
     },
     {
+      "collectionNo": 46,
+      "svtId": 601700,
+      "name": "卡米拉",
+      "bondRank": 6,
+      "bondPoints": 200362,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 7,
+      "currentThreshold": 190000,
+      "nextThreshold": 530000,
+      "pointsIntoLevel": 10362,
+      "pointsToNext": 329638,
+      "progress": 0.0305,
+      "bondEquips": [
+        {
+          "id": 9300160,
+          "name": "铁处女"
+        }
+      ]
+    },
+    {
       "collectionNo": 224,
       "svtId": 1000800,
       "name": "志度内",
@@ -4513,27 +4660,6 @@
         {
           "id": 9303400,
           "name": "难以忘怀之物"
-        }
-      ]
-    },
-    {
-      "collectionNo": 304,
-      "svtId": 604100,
-      "name": "鬼一法眼",
-      "bondRank": 6,
-      "bondPoints": 200194,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 7,
-      "currentThreshold": 200000,
-      "nextThreshold": 565000,
-      "pointsIntoLevel": 194,
-      "pointsToNext": 364806,
-      "progress": 0.0005,
-      "bondEquips": [
-        {
-          "id": 9305450,
-          "name": "鬼一的高齿屐"
         }
       ]
     },
@@ -4706,6 +4832,27 @@
       ]
     },
     {
+      "collectionNo": 359,
+      "svtId": 604500,
+      "name": "斯露德",
+      "bondRank": 5,
+      "bondPoints": 181997,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 6,
+      "currentThreshold": 50000,
+      "nextThreshold": 200000,
+      "pointsIntoLevel": 131997,
+      "pointsToNext": 18003,
+      "progress": 0.88,
+      "bondEquips": [
+        {
+          "id": 9306550,
+          "name": "最后的武器"
+        }
+      ]
+    },
+    {
       "collectionNo": 40,
       "svtId": 600200,
       "name": "咒腕哈桑",
@@ -4727,23 +4874,23 @@
       ]
     },
     {
-      "collectionNo": 359,
-      "svtId": 604500,
-      "name": "斯露德",
+      "collectionNo": 361,
+      "svtId": 604300,
+      "name": "奥特琳德",
       "bondRank": 5,
-      "bondPoints": 177039,
+      "bondPoints": 181133,
       "bondExceedCount": 0,
       "maxRank": 16,
       "nextRank": 6,
       "currentThreshold": 50000,
       "nextThreshold": 200000,
-      "pointsIntoLevel": 127039,
-      "pointsToNext": 22961,
-      "progress": 0.8469,
+      "pointsIntoLevel": 131133,
+      "pointsToNext": 18867,
+      "progress": 0.8742,
       "bondEquips": [
         {
-          "id": 9306550,
-          "name": "最后的武器"
+          "id": 9306570,
+          "name": "女武神的口粮"
         }
       ]
     },
@@ -4769,6 +4916,27 @@
       ]
     },
     {
+      "collectionNo": 360,
+      "svtId": 604400,
+      "name": "希露德",
+      "bondRank": 5,
+      "bondPoints": 171378,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 6,
+      "currentThreshold": 50000,
+      "nextThreshold": 200000,
+      "pointsIntoLevel": 121378,
+      "pointsToNext": 28622,
+      "progress": 0.8092,
+      "bondEquips": [
+        {
+          "id": 9306560,
+          "name": "SAM66"
+        }
+      ]
+    },
+    {
       "collectionNo": 32,
       "svtId": 500200,
       "name": "吉尔·德·雷",
@@ -4790,27 +4958,6 @@
       ]
     },
     {
-      "collectionNo": 360,
-      "svtId": 604400,
-      "name": "希露德",
-      "bondRank": 5,
-      "bondPoints": 165465,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 50000,
-      "nextThreshold": 200000,
-      "pointsIntoLevel": 115465,
-      "pointsToNext": 34535,
-      "progress": 0.7698,
-      "bondEquips": [
-        {
-          "id": 9306560,
-          "name": "SAM66"
-        }
-      ]
-    },
-    {
       "collectionNo": 440,
       "svtId": 705100,
       "name": "莉莉丝",
@@ -4828,27 +4975,6 @@
         {
           "id": 9309060,
           "name": "死、死、死"
-        }
-      ]
-    },
-    {
-      "collectionNo": 361,
-      "svtId": 604300,
-      "name": "奥特琳德",
-      "bondRank": 5,
-      "bondPoints": 161966,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 50000,
-      "nextThreshold": 200000,
-      "pointsIntoLevel": 111966,
-      "pointsToNext": 38034,
-      "progress": 0.7464,
-      "bondEquips": [
-        {
-          "id": 9306570,
-          "name": "女武神的口粮"
         }
       ]
     },
@@ -4958,48 +5084,6 @@
       ]
     },
     {
-      "collectionNo": 46,
-      "svtId": 601700,
-      "name": "卡米拉",
-      "bondRank": 5,
-      "bondPoints": 148528,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 35000,
-      "nextThreshold": 190000,
-      "pointsIntoLevel": 113528,
-      "pointsToNext": 41472,
-      "progress": 0.7324,
-      "bondEquips": [
-        {
-          "id": 9300160,
-          "name": "铁处女"
-        }
-      ]
-    },
-    {
-      "collectionNo": 230,
-      "svtId": 603500,
-      "name": "虞美人",
-      "bondRank": 5,
-      "bondPoints": 145899,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 50000,
-      "nextThreshold": 200000,
-      "pointsIntoLevel": 95899,
-      "pointsToNext": 54101,
-      "progress": 0.6393,
-      "bondEquips": [
-        {
-          "id": 9303460,
-          "name": "未读完的书"
-        }
-      ]
-    },
-    {
       "collectionNo": 351,
       "svtId": 2300500,
       "name": "Archetype：Earth",
@@ -5063,6 +5147,27 @@
       ]
     },
     {
+      "collectionNo": 371,
+      "svtId": 604700,
+      "name": "特斯卡特利波卡",
+      "bondRank": 5,
+      "bondPoints": 138522,
+      "bondExceedCount": 0,
+      "maxRank": 16,
+      "nextRank": 6,
+      "currentThreshold": 40000,
+      "nextThreshold": 150000,
+      "pointsIntoLevel": 98522,
+      "pointsToNext": 11478,
+      "progress": 0.8957,
+      "bondEquips": [
+        {
+          "id": 9307060,
+          "name": "战士的面具"
+        }
+      ]
+    },
+    {
       "collectionNo": 116,
       "svtId": 702200,
       "name": "茨木童子",
@@ -5080,27 +5185,6 @@
         {
           "id": 9301210,
           "name": "骨刀（无铭）"
-        }
-      ]
-    },
-    {
-      "collectionNo": 371,
-      "svtId": 604700,
-      "name": "特斯卡特利波卡",
-      "bondRank": 5,
-      "bondPoints": 134409,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 40000,
-      "nextThreshold": 150000,
-      "pointsIntoLevel": 94409,
-      "pointsToNext": 15591,
-      "progress": 0.8583,
-      "bondEquips": [
-        {
-          "id": 9307060,
-          "name": "战士的面具"
         }
       ]
     },
@@ -5567,27 +5651,6 @@
       ]
     },
     {
-      "collectionNo": 159,
-      "svtId": 602600,
-      "name": "燕青",
-      "bondRank": 5,
-      "bondPoints": 100294,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 35000,
-      "nextThreshold": 190000,
-      "pointsIntoLevel": 65294,
-      "pointsToNext": 89706,
-      "progress": 0.4213,
-      "bondEquips": [
-        {
-          "id": 9301630,
-          "name": "百八魔星"
-        }
-      ]
-    },
-    {
       "collectionNo": 5,
       "svtId": 100500,
       "name": "尼禄·克劳狄乌斯",
@@ -6050,27 +6113,6 @@
       ]
     },
     {
-      "collectionNo": 41,
-      "svtId": 601000,
-      "name": "斯忒诺",
-      "bondRank": 5,
-      "bondPoints": 73628,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 27500,
-      "nextThreshold": 290000,
-      "pointsIntoLevel": 46128,
-      "pointsToNext": 216372,
-      "progress": 0.1757,
-      "bondEquips": [
-        {
-          "id": 9300250,
-          "name": "女神的闪耀"
-        }
-      ]
-    },
-    {
       "collectionNo": 366,
       "svtId": 404900,
       "name": "黄飞虎",
@@ -6302,27 +6344,6 @@
       ]
     },
     {
-      "collectionNo": 235,
-      "svtId": 603600,
-      "name": "李书文",
-      "bondRank": 5,
-      "bondPoints": 66707,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 27500,
-      "nextThreshold": 285000,
-      "pointsIntoLevel": 39207,
-      "pointsToNext": 218293,
-      "progress": 0.1523,
-      "bondEquips": [
-        {
-          "id": 9303480,
-          "name": "老当益壮"
-        }
-      ]
-    },
-    {
       "collectionNo": 66,
       "svtId": 400900,
       "name": "安妮·伯妮＆玛莉·瑞德",
@@ -6403,27 +6424,6 @@
         {
           "id": 9301040,
           "name": "至无阳光映照之处"
-        }
-      ]
-    },
-    {
-      "collectionNo": 112,
-      "svtId": 602100,
-      "name": "酒吞童子",
-      "bondRank": 5,
-      "bondPoints": 62442,
-      "bondExceedCount": 0,
-      "maxRank": 16,
-      "nextRank": 6,
-      "currentThreshold": 40000,
-      "nextThreshold": 150000,
-      "pointsIntoLevel": 22442,
-      "pointsToNext": 87558,
-      "progress": 0.204,
-      "bondEquips": [
-        {
-          "id": 9301180,
-          "name": "神便鬼毒酒"
         }
       ]
     },
