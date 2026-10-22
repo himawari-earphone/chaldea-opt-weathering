@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang=zh-CN>
+<head>
+<meta charset=utf-8>
+<title>Caster 绊 9 贪心方案</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 20px 60px; font: 14px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif;
+         background: #f5f6f8; color: #1f2430; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 2px; }
+  .sub { color: #6b7280; font-size: 12px; margin-bottom: 18px; }
+  .sub2 { color: #9ca3af; font-size: 12px; margin: 0 0 12px; }
+  table.cmp { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb;
+              border-radius: 10px; overflow: hidden; margin-bottom: 22px; font-size: 13px; }
+  table.cmp th, table.cmp td { padding: 9px 12px; text-align: right; border-bottom: 1px solid #f0f1f3; }
+  table.cmp th:first-child, table.cmp td:first-child { text-align: left; }
+  table.cmp thead th { background: #f9fafb; color: #6b7280; font-weight: 600; font-size: 12px; }
+  table.cmp tbody tr:last-child td { border-bottom: none; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; }
+  .card .k { font-size: 12px; color: #6b7280; }
+  .card .v { font-size: 20px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .card .v.small { font-size: 13px; font-weight: 500; }
+  .card .u { font-size: 12px; color: #9ca3af; margin-left: 2px; font-weight: 400; }
+  .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 16px 8px; margin-bottom: 22px; }
+  details.round { border-top: 1px solid #f0f1f3; }
+  details.round:first-of-type { border-top: none; }
+  summary { display: flex; gap: 14px; align-items: center; padding: 9px 2px; cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .rno { font-weight: 600; min-width: 66px; }
+  .runs { background: #eef2ff; color: #3730a3; border-radius: 999px; padding: 1px 10px; font-size: 12px; }
+  .size { background: #f3f4f6; color: #4b5563; border-radius: 999px; padding: 1px 10px; font-size: 12px; }
+  .size.warn { background: #fef3c7; color: #92400e; }
+  .loss { color: #6b7280; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meta { margin-left: auto; color: #9ca3af; font-size: 12px; }
+  .body { padding: 2px 2px 14px; }
+  ul.crew { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 6px; }
+  ul.crew li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+               background: #fafbfc; border: 1px solid #f0f1f3; border-radius: 8px; padding: 6px 10px; }
+  .cost, .gain, .need { font-size: 12px; color: #6b7280; font-variant-numeric: tabular-nums; }
+  .gain { color: #047857; }
+  .done { margin-left: auto; background: #dcfce7; color: #15803d; border-radius: 999px; padding: 0 8px; font-size: 12px; }
+  .equip { margin: 0; font-size: 13px; }
+  .dim { color: #9ca3af; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class=wrap>
+  <h1>Caster 绊 9 贪心方案</h1>
+  <div class=sub>数据源：caster_bond.xlsx/Sheet4 → Sheet4（25 名候选，总缺口 21,512,363）　·　
+    单轮约束：≤3 人 + 2 个礼装槽 + cost 113　·　40 AP/场，146 AP/果<br>
+    前排陪跑：诸葛孔明（剩余 6,531,154）、山鲁佐德（剩余 8,238,356）。前排礼装 +70% 与自带 +4% 给全队，站前排再 +20%；两人各到绊 15 再给全队 +20%</div>
+  <table class=cmp>
+    <thead><tr><th>准则</th><th>轮次</th><th>总场次</th><th>总 AP</th><th>金苹果</th></tr></thead>
+    <tbody><tr><td>Sheet4 原始准则</td><td>25</td><td>1556</td><td>62,240</td><td>427</td></tr><tr><td>吞吐优先</td><td>23</td><td>776</td><td>31,040</td><td>213</td></tr><tr><td>全局覆盖</td><td>38 段</td><td>764</td><td>30,560</td><td>210</td></tr></tbody>
+  </table>
+  
+      <section class=panel>
+        <h2>Sheet4 原始准则 <span class=dim>（loss）</span></h2>
+        <p class=sub2>每轮取 loss = N3 − P3 + R3 最小的组合：优先让队里最快的人毕业。
+          </p>
+        <div class=cards>
+          <div class=card><div class=k>总轮次</div><div class=v>25</div></div>
+          <div class=card><div class=k>总场次</div><div class=v>1556<span class=u>场</span></div></div>
+          <div class=card><div class=k>总 AP</div><div class=v>62,240<span class=u>AP</span></div></div>
+          <div class=card><div class=k>金苹果</div><div class=v>427<span class=u>个</span></div></div>
+          <div class=card><div class=k>非满编场次</div><div class=v>1416<span class=u>场 / 19 轮</span></div></div>
+          <div class=card><div class=k>陪跑毕业</div><div class=v class=small>诸葛孔明：第 16 轮　山鲁佐德：第 18 轮</div></div>
+          <div class=card><div class=k>状态</div><div class=v>全部毕业</div></div>
+        </div>
+        <p class=sub2>队伍人数分布：3 人 6 轮 / 140 场、2 人 5 轮 / 222 场、1 人 14 轮 / 1194 场
+          ；其中 18 轮是准则选择未上满（非 cost 限制）</p>
+        
+          <details class=round open>
+            <summary>
+              <span class=rno>第 1 轮</span>
+              <span class=runs>20 场</span>
+              <span class=size warn>2 人（本可上 3 人）</span>
+              <span class=loss>loss 19.4247</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>齐格</b><span class=cost>12 cost</span><span class=gain>+8,974/场</span><span class=need>179,321 → 0</span><span class=done>毕业</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>765,398 → 585,924</span></li></ul>
+              <p class=equip>礼装：+5%×3（12 cost）　<span class=dim>P3 0.5753 · R3 0.000 · 本轮后剩 24 人</span></p>
+            </div>
+          </details>
+          <details class=round open>
+            <summary>
+              <span class=rno>第 2 轮</span>
+              <span class=runs>30 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 29.1294</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>美狄亚</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>286,112 → 0</span><span class=done>毕业</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,736/场</span><span class=need>585,924 → 323,834</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,736/场</span><span class=need>861,165 → 599,075</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.8706 · R3 0.000 · 本轮后剩 23 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 3 轮</span>
+              <span class=runs>37 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 36.3350</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>803,324 → 471,296</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>323,834 → 0</span><span class=done>毕业</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>599,075 → 267,048</span></li></ul>
+              <p class=equip>礼装：+5%×3（12 cost）　<span class=dim>P3 0.8630 · R3 0.990 · 本轮后剩 22 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 4 轮</span>
+              <span class=runs>30 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 29.3360</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>471,296 → 202,085</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>567,726 → 298,514</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,974/场</span><span class=need>267,048 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：+5%×3（12 cost）　<span class=dim>P3 0.8630 · R3 0.995 · 本轮后剩 21 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 5 轮</span>
+              <span class=runs>21 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 20.1184</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>932,877 → 729,473</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>202,085 → 0</span><span class=done>毕业</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>298,514 → 95,110</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.9315 · R3 0.249 · 本轮后剩 20 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 6 轮</span>
+              <span class=runs>10 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 9.1483</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>729,473 → 632,613</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>920,617 → 823,758</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>95,110 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.9315 · R3 0.399 · 本轮后剩 19 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 7 轮</span>
+              <span class=runs>37 场</span>
+              <span class=size warn>1 人（本可上 3 人）</span>
+              <span class=loss>loss 36.6667</span>
+              <span class=meta>cost 108</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>雨之魔女梣</b><span class=cost>16 cost</span><span class=gain>+10,398/场</span><span class=need>380,368 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)、献给幸福的新娘(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.3333 · R3 0.000 · 本轮后剩 18 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 8 轮</span>
+              <span class=runs>53 场</span>
+              <span class=size warn>2 人（本可上 3 人）</span>
+              <span class=loss>loss 52.4454</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>632,613 → 119,260</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+9,686/场</span><span class=need>512,842 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.6210 · R3 0.332 · 本轮后剩 17 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 9 轮</span>
+              <span class=runs>12 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 11.0228</span>
+              <span class=meta>cost 106</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>1,046,800 → 924,871</span></li><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>119,260 → 0</span><span class=done>毕业</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>823,758 → 701,829</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>P3 0.9772 · R3 0.000 · 本轮后剩 16 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 10 轮</span>
+              <span class=runs>68 场</span>
+              <span class=size warn>2 人（本可上 3 人）</span>
+              <span class=loss>loss 67.3333</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>924,871 → 217,799</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,398/场</span><span class=need>701,829 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.6667 · R3 0.000 · 本轮后剩 15 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 11 轮</span>
+              <span class=runs>21 场</span>
+              <span class=size warn>2 人（本可上 3 人）</span>
+              <span class=loss>loss 20.4137</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>217,799 → 0</span><span class=done>毕业</span></li><li><b>冯·霍恩海姆·帕拉塞尔苏斯</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>821,778 → 623,359</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.6362 · R3 0.249 · 本轮后剩 14 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 12 轮</span>
+              <span class=runs>60 场</span>
+              <span class=size warn>2 人（本可上 3 人）</span>
+              <span class=loss>loss 59.3333</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>1,049,196 → 425,309</span></li><li><b>冯·霍恩海姆·帕拉塞尔苏斯</b><span class=cost>7 cost</span><span class=gain>+10,398/场</span><span class=need>623,359 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.6667 · R3 0.000 · 本轮后剩 13 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 13 轮</span>
+              <span class=runs>41 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 40.6667</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>425,309 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.3333 · R3 0.000 · 本轮后剩 12 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 14 轮</span>
+              <span class=runs>71 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 70.6895</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,686/场</span><span class=need>684,870 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.3105 · R3 0.000 · 本轮后剩 11 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 15 轮</span>
+              <span class=runs>92 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 91.6667</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>952,780 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、献给幸福的新娘(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.3333 · R3 0.000 · 本轮后剩 10 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 16 轮</span>
+              <span class=runs>93 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 92.6667</span>
+              <span class=meta>cost 104 · 陪跑毕业</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>酒吞童子</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>965,459 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.3333 · R3 0.000 · 本轮后剩 9 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 17 轮</span>
+              <span class=runs>86 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 85.6876</span>
+              <span class=meta>cost 108</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+10,636/场</span><span class=need>911,040 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.3124 · R3 0.000 · 本轮后剩 8 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 18 轮</span>
+              <span class=runs>95 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 94.6457</span>
+              <span class=meta>cost 108 · 陪跑毕业</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+12,060/场</span><span class=need>1,133,909 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)、迦勒底之晨(+20%)　<span class=dim>P3 0.3543 · R3 0.000 · 本轮后剩 7 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 19 轮</span>
+              <span class=runs>89 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 88.6860</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+11,585/场</span><span class=need>1,030,373 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.3140 · R3 0.000 · 本轮后剩 6 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 20 轮</span>
+              <span class=runs>91 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 90.6667</span>
+              <span class=meta>cost 108</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊莉雅丝菲尔·冯·爱因兹贝伦</b><span class=cost>16 cost</span><span class=gain>+12,297/场</span><span class=need>1,107,150 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：至诚的一针(+20%)、迦勒底之晨(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.3333 · R3 0.000 · 本轮后剩 5 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 21 轮</span>
+              <span class=runs>91 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 90.6860</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+11,585/场</span><span class=need>1,051,460 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×2（12 cost）　<span class=dim>P3 0.3140 · R3 0.000 · 本轮后剩 4 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 22 轮</span>
+              <span class=runs>93 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 92.6667</span>
+              <span class=meta>cost 108</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+12,297/场</span><span class=need>1,140,954 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)、献给幸福的新娘(+20%)、+5%×1（12 cost）　<span class=dim>P3 0.3333 · R3 0.000 · 本轮后剩 3 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 23 轮</span>
+              <span class=runs>104 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 103.7053</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+10,873/场</span><span class=need>1,128,693 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：+5%×3（12 cost）　<span class=dim>P3 0.2947 · R3 0.000 · 本轮后剩 2 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 24 轮</span>
+              <span class=runs>104 场</span>
+              <span class=size warn>1 人（本可上 2 人）</span>
+              <span class=loss>loss 103.7053</span>
+              <span class=meta>cost 104</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+10,873/场</span><span class=need>1,122,401 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：+5%×3（12 cost）　<span class=dim>P3 0.2947 · R3 0.000 · 本轮后剩 1 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 25 轮</span>
+              <span class=runs>107 场</span>
+              <span class=size>1 人</span>
+              <span class=loss>loss 106.7053</span>
+              <span class=meta>cost 108</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+10,873/场</span><span class=need>1,155,750 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：+5%×3（12 cost）　<span class=dim>P3 0.2947 · R3 0.000 · 本轮后剩 0 人</span></p>
+            </div>
+          </details>
+      </section>
+      <section class=panel>
+        <h2>吞吐优先 <span class=dim>（throughput）</span></h2>
+        <p class=sub2>每轮取「每场推进的有效缺口」最大的组合：溢出更少，总场次更短。
+          　·　随机重启 40 次，最优 seed 31</p>
+        <div class=cards>
+          <div class=card><div class=k>总轮次</div><div class=v>23</div></div>
+          <div class=card><div class=k>总场次</div><div class=v>776<span class=u>场</span></div></div>
+          <div class=card><div class=k>总 AP</div><div class=v>31,040<span class=u>AP</span></div></div>
+          <div class=card><div class=k>金苹果</div><div class=v>213<span class=u>个</span></div></div>
+          <div class=card><div class=k>非满编场次</div><div class=v>1<span class=u>场 / 1 轮</span></div></div>
+          <div class=card><div class=k>陪跑毕业</div><div class=v class=small>诸葛孔明：第 19 轮　山鲁佐德：未毕业</div></div>
+          <div class=card><div class=k>状态</div><div class=v>全部毕业</div></div>
+        </div>
+        <p class=sub2>队伍人数分布：3 人 22 轮 / 775 场、1 人 1 轮 / 1 场
+          ；所有非满编轮均为 cost 上限所致</p>
+        
+          <details class=round open>
+            <summary>
+              <span class=rno>第 1 轮</span>
+              <span class=runs>81 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 80.0228</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>932,877 → 109,859</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>920,617 → 97,599</span></li><li><b>冯·霍恩海姆·帕拉塞尔苏斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>821,778 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>P3 0.9772 · R3 0.000 · 本轮后剩 24 人</span></p>
+            </div>
+          </details>
+          <details class=round open>
+            <summary>
+              <span class=rno>第 2 轮</span>
+              <span class=runs>10 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 9.0514</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>1,133,909 → 1,032,302</span></li><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>109,859 → 8,251</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>97,599 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>P3 0.9772 · R3 0.143 · 本轮后剩 23 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 3 轮</span>
+              <span class=runs>62 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 61.0533</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>1,046,800 → 416,835</span></li><li><b>酒吞童子</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>965,459 → 335,494</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>567,726 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>P3 0.9467 · R3 0.000 · 本轮后剩 22 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 4 轮</span>
+              <span class=runs>34 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 33.0533</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>416,835 → 71,371</span></li><li><b>酒吞童子</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>335,494 → 0</span><span class=done>毕业</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>803,324 → 490,146</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>P3 0.9467 · R3 0.000 · 本轮后剩 21 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 5 轮</span>
+              <span class=runs>54 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 53.0837</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>1,049,196 → 500,517</span></li><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>1,030,373 → 532,973</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>490,146 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>P3 0.9163 · R3 0.000 · 本轮后剩 20 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 6 轮</span>
+              <span class=runs>8 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 7.1236</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>71,371 → 0</span><span class=done>毕业</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>952,780 → 871,494</span></li><li><b>美狄亚</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>286,112 → 212,423</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、献给幸福的新娘(+20%)　<span class=dim>P3 0.9163 · R3 0.200 · 本轮后剩 19 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 7 轮</span>
+              <span class=runs>54 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 53.1549</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>500,517 → 0</span><span class=done>毕业</span></li><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>532,973 → 30,444</span></li><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>1,051,460 → 548,932</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8950 · R3 0.249 · 本轮后剩 18 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 8 轮</span>
+              <span class=runs>23 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 22.2049</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>1,032,302 → 818,262</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>871,494 → 657,454</span></li><li><b>美狄亚</b><span class=cost>7 cost</span><span class=gain>+9,306/场</span><span class=need>212,423 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8950 · R3 0.499 · 本轮后剩 17 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 9 轮</span>
+              <span class=runs>56 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 55.1050</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>548,932 → 27,791</span></li><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>684,870 → 163,730</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>512,842 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8950 · R3 0.000 · 本轮后剩 16 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 10 轮</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 2.1050</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>30,444 → 2,526</span></li><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>27,791 → 0</span><span class=done>毕业</span></li><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>163,730 → 135,811</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8950 · R3 0.000 · 本轮后剩 15 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 11 轮</span>
+              <span class=runs>72 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 71.2140</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>818,262 → 155,061</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>657,454 → 0</span><span class=done>毕业</span></li><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>911,040 → 247,839</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)　<span class=dim>P3 0.8858 · R3 0.499 · 本轮后剩 14 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 12 轮</span>
+              <span class=runs>1 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 0.2049</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>155,061 → 145,755</span></li><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+9,306/场</span><span class=need>8,251 → 0</span><span class=done>毕业</span></li><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>135,811 → 126,505</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8950 · R3 0.499 · 本轮后剩 13 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 13 轮</span>
+              <span class=runs>14 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 13.2352</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>145,755 → 15,470</span></li><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>126,505 → 0</span><span class=done>毕业</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,356/场</span><span class=need>765,398 → 648,407</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8645 · R3 0.499 · 本轮后剩 12 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 14 轮</span>
+              <span class=runs>79 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 78.1446</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>1,140,954 → 338,257</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,262/场</span><span class=need>648,407 → 0</span><span class=done>毕业</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,262/场</span><span class=need>861,165 → 208,505</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)、献给幸福的新娘(+20%)　<span class=dim>P3 0.8554 · R3 0.000 · 本轮后剩 11 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 15 轮</span>
+              <span class=runs>37 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 36.2443</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>雨之魔女梣</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>380,368 → 39,557</span></li><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>338,257 → 0</span><span class=done>毕业</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,262/场</span><span class=need>1,128,693 → 823,017</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)　<span class=dim>P3 0.8554 · R3 0.499 · 本轮后剩 10 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 16 轮</span>
+              <span class=runs>21 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 20.1598</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>齐格</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>179,321 → 0</span><span class=done>毕业</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>823,017 → 639,554</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,736/场</span><span class=need>208,505 → 25,042</span></li></ul>
+              <p class=equip>礼装：+5%×2（12 cost）　<span class=dim>P3 0.8402 · R3 0.000 · 本轮后剩 9 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 17 轮</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 2.2654</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>雨之魔女梣</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>39,557 → 11,638</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,356/场</span><span class=need>639,554 → 614,485</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,356/场</span><span class=need>25,042 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：献给幸福的新娘(+20%)、+2%×1（9 cost）　<span class=dim>P3 0.8341 · R3 0.498 · 本轮后剩 8 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 18 轮</span>
+              <span class=runs>30 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 29.3079</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊莉雅丝菲尔·冯·爱因兹贝伦</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>1,107,150 → 830,816</span></li><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+8,262/场</span><span class=need>247,839 → 0</span><span class=done>毕业</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,262/场</span><span class=need>614,485 → 366,639</span></li></ul>
+              <p class=equip>礼装：至诚的一针(+20%)　<span class=dim>P3 0.8250 · R3 0.664 · 本轮后剩 7 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 19 轮</span>
+              <span class=runs>91 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 90.2745</span>
+              <span class=meta>cost 112 · 陪跑毕业</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊莉雅丝菲尔·冯·爱因兹贝伦</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>830,816 → 0</span><span class=done>毕业</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+8,262/场</span><span class=need>1,155,750 → 403,952</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+8,262/场</span><span class=need>1,122,401 → 370,603</span></li></ul>
+              <p class=equip>礼装：至诚的一针(+20%)　<span class=dim>P3 0.8250 · R3 0.498 · 本轮后剩 6 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 20 轮</span>
+              <span class=runs>39 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 38.1674</span>
+              <span class=meta>cost 108</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,449/场</span><span class=need>403,952 → 35,459</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>366,639 → 0</span><span class=done>毕业</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>370,603 → 2,110</span></li></ul>
+              <p class=equip>礼装：+5%×1（12 cost）　<span class=dim>P3 0.8326 · R3 0.000 · 本轮后剩 5 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 21 轮</span>
+              <span class=runs>2 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 1.3795</span>
+              <span class=meta>cost 113</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>15,470 → 0</span><span class=done>毕业</span></li><li><b>雨之魔女梣</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>11,638 → 0</span><span class=done>毕业</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>35,459 → 16,847</span></li></ul>
+              <p class=equip>礼装：+2%×1（9 cost）　<span class=dim>P3 0.8201 · R3 0.998 · 本轮后剩 3 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 22 轮</span>
+              <span class=runs>1 场</span>
+              <span class=size>3 人</span>
+              <span class=loss>loss 0.3779</span>
+              <span class=meta>cost 105</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>2,526 → 0</span><span class=done>毕业</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,306/场</span><span class=need>16,847 → 7,541</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+9,306/场</span><span class=need>2,110 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：+2%×1（9 cost）　<span class=dim>P3 0.8201 · R3 0.990 · 本轮后剩 1 人</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 23 轮</span>
+              <span class=runs>1 场</span>
+              <span class=size>1 人</span>
+              <span class=loss>loss 0.7294</span>
+              <span class=meta>cost 84</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>7,541 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)　<span class=dim>P3 0.2706 · R3 0.000 · 本轮后剩 0 人</span></p>
+            </div>
+          </details>
+      </section>
+      <section class=panel>
+        <h2>全局覆盖 <span class=dim>（按绊 15 的全队加成分段）</span></h2>
+        <p class=sub2>前排礼装给全队 +70%，全队自带 +4%，站前排再 +20%。孔明和山鲁佐德因此是 1.94，后排 25 人是 1.74。两人冲的都是绊 15，各自满了之后全队再 +20%。后排从 12 件里任选最多 3 件：6 件 12 cost 户口 +20%，3 件 12 cost 全队 +5%，3 件 9 cost 全队 +2%。一个人的缺口可以拆给好几支队伍，同一段里的先后顺序不影响总数。</p>
+        <p class=sub2>山鲁佐德到绊 15 会再给全队 +20%（后排 2.14）。把她也刷满要 800 场，不比现在少，所以这版不强制她到绊 15。</p>
+        <div class=cards>
+          <div class=card><div class=k>总场次</div><div class=v>764<span class=u>场</span></div></div>
+          <div class=card><div class=k>总 AP</div><div class=v>30,560<span class=u>AP</span></div></div>
+          <div class=card><div class=k>金苹果</div><div class=v>210<span class=u>个</span></div></div>
+          <div class=card><div class=k>分数下界</div><div class=v>763<span class=u>场</span></div></div>
+          <div class=card><div class=k>孔明</div><div class=v class=small>已到绊15</div></div>
+          <div class=card><div class=k>山鲁佐德</div><div class=v class=small>还差 964,847</div></div>
+          <div class=card><div class=k>状态</div><div class=v>25 人全部盖满</div></div>
+        </div>
+        <p class=sub2 style="color:#1f2430;font-weight:600;margin-top:14px">孔明未到绊15　前排 1.94　后排 1.74　691 场　24 段</p>
+          <details class=round open>
+            <summary>
+              <span class=rno>第 1 段</span>
+              <span class=runs>75 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>1,133,909 → 443,075</span></li><li><b>伊莉雅丝菲尔·冯·爱因兹贝伦</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>1,107,150 → 416,316</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+8,262/场</span><span class=need>1,122,401 → 502,787</span></li></ul>
+              <p class=equip>礼装：迦勒底之晨(+20%)　<span class=dim>孔明 +762,054　山鲁佐德 +690,834</span></p>
+            </div>
+          </details>
+          <details class=round open>
+            <summary>
+              <span class=rno>第 2 段</span>
+              <span class=runs>71 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>1,049,196 → 327,785</span></li><li><b>冯·霍恩海姆·帕拉塞尔苏斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>821,778 → 100,367</span></li><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>1,051,460 → 397,470</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>孔明 +653,990　山鲁佐德 +653,990</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 3 段</span>
+              <span class=runs>57 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>1,140,954 → 615,920</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>952,780 → 427,746</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+8,262/场</span><span class=need>1,155,750 → 684,843</span></li></ul>
+              <p class=equip>礼装：献给幸福的新娘(+20%)　<span class=dim>孔明 +525,034　山鲁佐德 +579,161</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 4 段</span>
+              <span class=runs>51 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>1,046,800 → 528,603</span></li><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>932,877 → 414,680</span></li><li><b>酒吞童子</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>965,459 → 447,262</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>孔明 +469,767　山鲁佐德 +469,767</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 5 段</span>
+              <span class=runs>49 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>1,030,373 → 567,396</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>803,324 → 340,347</span></li><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>684,870 → 221,893</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +462,977　山鲁佐德 +462,977</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 6 段</span>
+              <span class=runs>43 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>528,603 → 91,692</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>920,617 → 483,706</span></li><li><b>酒吞童子</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>447,262 → 10,351</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>孔明 +396,078　山鲁佐德 +396,078</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 7 段</span>
+              <span class=runs>42 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊莉雅丝菲尔·冯·爱因兹贝伦</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>416,316 → 0</span><span class=done>毕业</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,262/场</span><span class=need>765,398 → 418,414</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,262/场</span><span class=need>861,165 → 514,181</span></li></ul>
+              <p class=equip>礼装：至诚的一针(+20%)、迦勒底之晨(+20%)　<span class=dim>孔明 +426,750　山鲁佐德 +386,867</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 8 段</span>
+              <span class=runs>40 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>567,396 → 189,455</span></li><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>397,470 → 19,530</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>567,726 → 189,785</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +377,941　山鲁佐德 +377,941</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 9 段</span>
+              <span class=runs>39 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>443,075 → 46,807</span></li><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>414,680 → 18,412</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>483,706 → 87,438</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>孔明 +359,234　山鲁佐德 +359,234</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 10 段</span>
+              <span class=runs>38 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>雨之魔女梣</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>380,368 → 30,345</span></li><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>615,920 → 265,898</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>427,746 → 77,724</span></li></ul>
+              <p class=equip>礼装：献给幸福的新娘(+20%)　<span class=dim>孔明 +350,023　山鲁佐德 +386,107</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 11 段</span>
+              <span class=runs>34 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>911,040 → 597,862</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+8,262/场</span><span class=need>684,843 → 403,952</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,262/场</span><span class=need>1,128,693 → 847,801</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)　<span class=dim>孔明 +313,178　山鲁佐德 +313,178</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 12 段</span>
+              <span class=runs>34 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,736/场</span><span class=need>418,414 → 121,379</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>847,801 → 550,766</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>502,787 → 205,752</span></li></ul>
+              <p class=equip>礼装：+5%×2（12 cost）　<span class=dim>孔明 +329,321　山鲁佐德 +329,321</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 13 段</span>
+              <span class=runs>27 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>美狄亚</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>286,112 → 31,002</span></li><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+9,449/场</span><span class=need>597,862 → 342,752</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,499/场</span><span class=need>514,181 → 284,710</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +255,110　山鲁佐德 +255,110</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 14 段</span>
+              <span class=runs>20 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>327,785 → 124,570</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>340,347 → 156,124</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>512,842 → 328,620</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>孔明 +184,222　山鲁佐德 +184,222</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 15 段</span>
+              <span class=runs>17 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>550,766 → 402,249</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>205,752 → 57,235</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,736/场</span><span class=need>284,710 → 136,193</span></li></ul>
+              <p class=equip>礼装：+5%×2（12 cost）　<span class=dim>孔明 +164,661　山鲁佐德 +164,661</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 16 段</span>
+              <span class=runs>16 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>221,893 → 70,716</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>189,785 → 38,609</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>328,620 → 177,443</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +151,176　山鲁佐德 +151,176</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 17 段</span>
+              <span class=runs>8 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>91,692 → 10,407</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>87,438 → 6,152</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>177,443 → 103,754</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>孔明 +73,689　山鲁佐德 +73,689</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 18 段</span>
+              <span class=runs>8 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>124,570 → 43,285</span></li><li><b>冯·霍恩海姆·帕拉塞尔苏斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>100,367 → 19,081</span></li><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>189,455 → 115,766</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>孔明 +73,689　山鲁佐德 +73,689</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 19 段</span>
+              <span class=runs>8 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>齐格</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>179,321 → 109,430</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,736/场</span><span class=need>121,379 → 51,489</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+8,736/场</span><span class=need>402,249 → 332,358</span></li></ul>
+              <p class=equip>礼装：+5%×2（12 cost）　<span class=dim>孔明 +77,487　山鲁佐德 +77,487</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 20 段</span>
+              <span class=runs>7 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>115,766 → 49,626</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>156,124 → 89,984</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+9,449/场</span><span class=need>103,754 → 37,615</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +66,140　山鲁佐德 +66,140</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 21 段</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>265,898 → 235,415</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+8,262/场</span><span class=need>51,489 → 26,704</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+8,262/场</span><span class=need>136,193 → 111,408</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)、献给幸福的新娘(+20%)　<span class=dim>孔明 +27,633　山鲁佐德 +30,482</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 22 段</span>
+              <span class=runs>2 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>46,807 → 26,485</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>89,984 → 71,562</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>38,609 → 20,187</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、迦勒底之晨(+20%)　<span class=dim>孔明 +20,321　山鲁佐德 +18,422</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 23 段</span>
+              <span class=runs>1 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>18,412 → 8,251</span></li><li><b>梅菲斯托费勒斯</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>6,152 → 0</span><span class=done>毕业</span></li><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>342,752 → 333,541</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>孔明 +9,211　山鲁佐德 +9,211</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 24 段</span>
+              <span class=runs>1 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>235,415 → 226,204</span></li><li><b>齐格</b><span class=cost>12 cost</span><span class=gain>+8,262/场</span><span class=need>109,430 → 101,169</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+8,262/场</span><span class=need>403,952 → 395,690</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)　<span class=dim>孔明 +9,211　山鲁佐德 +9,211</span></p>
+            </div>
+          </details><p class=sub2 style="color:#1f2430;font-weight:600;margin-top:14px">孔明已到绊15　前排 2.14　后排 1.94　73 场　14 段</p>
+          <details class=round>
+            <summary>
+              <span class=rno>第 25 段</span>
+              <span class=runs>27 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>333,541 → 59,201</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>395,690 → 146,990</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>332,358 → 83,658</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)　<span class=dim>孔明 +274,339　山鲁佐德 +274,339</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 26 段</span>
+              <span class=runs>11 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>226,204 → 114,436</span></li><li><b>齐格</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>101,169 → 0</span><span class=done>毕业</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>146,990 → 45,668</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)　<span class=dim>孔明 +111,768　山鲁佐德 +111,768</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 27 段</span>
+              <span class=runs>6 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+9,686/场</span><span class=need>83,658 → 25,543</span></li><li><b>童谣</b><span class=cost>12 cost</span><span class=gain>+9,686/场</span><span class=need>57,235 → 0</span><span class=done>毕业</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+9,686/场</span><span class=need>111,408 → 53,293</span></li></ul>
+              <p class=equip>礼装：+5%×2（12 cost）　<span class=dim>孔明 +63,813　山鲁佐德 +63,813</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 28 段</span>
+              <span class=runs>5 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>夏洛特·科黛</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>49,626 → 0</span><span class=done>毕业</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+10,398/场</span><span class=need>71,562 → 19,572</span></li><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>70,716 → 18,726</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +51,991　山鲁佐德 +51,991</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 29 段</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>久远寺有珠</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>26,485 → 0</span><span class=done>毕业</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>77,724 → 47,241</span></li><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>59,201 → 28,719</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)　<span class=dim>孔明 +30,482　山鲁佐德 +30,482</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 30 段</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>雨之魔女梣</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>30,345 → 0</span><span class=done>毕业</span></li><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>114,436 → 83,954</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>47,241 → 16,759</span></li></ul>
+              <p class=equip>礼装：献给幸福的新娘(+20%)　<span class=dim>孔明 +30,482　山鲁佐德 +33,331</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 31 段</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+11,110/场</span><span class=need>83,954 → 50,623</span></li><li><b>杰罗尼莫</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>26,704 → 0</span><span class=done>毕业</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+9,211/场</span><span class=need>53,293 → 25,659</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)、献给幸福的新娘(+20%)　<span class=dim>孔明 +30,482　山鲁佐德 +33,331</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 32 段</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>50,623 → 20,141</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>45,668 → 18,034</span></li><li><b>示巴女王</b><span class=cost>12 cost</span><span class=gain>+9,211/场</span><span class=need>25,543 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：检查报告(+20%)　<span class=dim>孔明 +30,482　山鲁佐德 +30,482</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 33 段</span>
+              <span class=runs>3 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 110</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>美狄亚</b><span class=cost>7 cost</span><span class=gain>+10,398/场</span><span class=need>31,002 → 0</span><span class=done>毕业</span></li><li><b>玉藻前</b><span class=cost>16 cost</span><span class=gain>+10,398/场</span><span class=need>28,719 → 0</span><span class=done>毕业</span></li><li><b>阿维斯布隆</b><span class=cost>7 cost</span><span class=gain>+9,449/场</span><span class=need>25,659 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +31,194　山鲁佐德 +31,194</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 34 段</span>
+              <span class=runs>2 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 112</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>玄奘三藏</b><span class=cost>16 cost</span><span class=gain>+10,161/场</span><span class=need>20,141 → 0</span><span class=done>毕业</span></li><li><b>武则天</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>16,759 → 0</span><span class=done>毕业</span></li><li><b>克莱恩小姐</b><span class=cost>16 cost</span><span class=gain>+9,211/场</span><span class=need>18,034 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：献给幸福的新娘(+20%)　<span class=dim>孔明 +20,321　山鲁佐德 +22,221</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 35 段</span>
+              <span class=runs>2 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+11,110/场</span><span class=need>43,285 → 21,064</span></li><li><b>冯·霍恩海姆·帕拉塞尔苏斯</b><span class=cost>7 cost</span><span class=gain>+11,110/场</span><span class=need>19,081 → 0</span><span class=done>毕业</span></li><li><b>爱丽丝菲尔〔天之衣〕</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>19,530 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>孔明 +20,321　山鲁佐德 +20,321</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 36 段</span>
+              <span class=runs>2 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>海伦娜·布拉瓦茨基</b><span class=cost>12 cost</span><span class=gain>+11,110/场</span><span class=need>21,064 → 0</span><span class=done>毕业</span></li><li><b>查尔斯·巴贝奇</b><span class=cost>7 cost</span><span class=gain>+10,161/场</span><span class=need>19,572 → 0</span><span class=done>毕业</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+10,161/场</span><span class=need>37,615 → 17,293</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、至诚的一针(+20%)　<span class=dim>孔明 +20,321　山鲁佐德 +20,321</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 37 段</span>
+              <span class=runs>2 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>喀耳刻</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>18,726 → 0</span><span class=done>毕业</span></li><li><b>张角</b><span class=cost>7 cost</span><span class=gain>+10,398/场</span><span class=need>20,187 → 0</span><span class=done>毕业</span></li><li><b>由井正雪</b><span class=cost>12 cost</span><span class=gain>+10,398/场</span><span class=need>17,293 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：迦勒底之人(+20%)、+5%×1（12 cost）　<span class=dim>孔明 +20,796　山鲁佐德 +20,796</span></p>
+            </div>
+          </details>
+          <details class=round>
+            <summary>
+              <span class=rno>第 38 段</span>
+              <span class=runs>1 场</span>
+              <span class=size>3 人</span>
+              <span class=meta>cost 111</span>
+            </summary>
+            <div class=body>
+              <ul class=crew><li><b>伊丽莎白·巴托里〔万圣节〕</b><span class=cost>12 cost</span><span class=gain>+11,110/场</span><span class=need>10,407 → 0</span><span class=done>毕业</span></li><li><b>吉尔·德·雷</b><span class=cost>7 cost</span><span class=gain>+11,110/场</span><span class=need>8,251 → 0</span><span class=done>毕业</span></li><li><b>酒吞童子</b><span class=cost>12 cost</span><span class=gain>+11,110/场</span><span class=need>10,351 → 0</span><span class=done>毕业</span></li></ul>
+              <p class=equip>礼装：异星之神(+20%)、迦勒底之人(+20%)　<span class=dim>孔明 +10,161　山鲁佐德 +10,161</span></p>
+            </div>
+          </details>
+      </section>
+</div>
+</body>
+</html>

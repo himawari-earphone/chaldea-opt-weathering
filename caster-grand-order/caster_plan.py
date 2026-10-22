@@ -1,7 +1,10 @@
 """把 Sheet4 的模型程序化，并用多轮贪心推导「把候选 Caster 全部练到绊 9」的完整方案。
 
 单轮模型（与 caster_bond.xlsx 的 Sheet4 一致）：
-    L_i = K_i × 4748 × (1 + 0.04 + 0.4 + 0.4 + n5 × 0.05 + Σ 命中_ij × 启用_j × 系数_j)
+    后排固定区 1.74 = 1 + 全队自带 0.04 + 前排礼装 0.70
+    前排再加站位 0.20，所以孔明、山鲁佐德是 1.94
+    两人冲绊 15，各自满了之后全队再 +0.20（孔明满：后排 1.94 / 前排 2.14；两人都满：后排 2.14 / 前排 2.34）
+    L_i = K_i × 4748 × (固定区 + n5 × 0.05 + Σ 命中_ij × 启用_j × 系数_j)
     M_i = 距绊 9 的剩余缺口
     N3  = ROUNDUP(1 / MAX(L_i / M_i))        由队里毕业最快的那位决定
     P3  = Σ L_i / (3 × 4748 × 2.29)          归一化总收益
@@ -38,21 +41,27 @@ NS_MAP = {"m": NS[1:-1]}
 REL_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 
 BASE_BOND = 4748.0                                     # 单场基础绊
-FIXED_BONUS = 1 + 0.04 + 0.4 + 0.4                     # 固定三人段的收益系数
-IDEAL_BONUS = 1 + 0.04 + 0.4 + 0.4 + 0.05 + 0.4        # P3 归一化用的理想单人系数
+BACK_FIXED = 1 + 0.04 + 0.7                            # 1.74：1 + 全队自带 4% + 前排礼装 70%
+FRONT_POSITION = 0.2                                   # 站前排额外 20%，只有孔明和山鲁佐德
+FRONT_FIXED = BACK_FIXED + FRONT_POSITION              # 1.94
+FIXED_BONUS = BACK_FIXED                               # 三人段用后排固定区
+IDEAL_BONUS = BACK_FIXED + 0.05 + 0.4                  # P3 归一化用的理想单人系数
 COST_FIXED = 80                                        # 队伍其余成员的 cost（含 2 件礼装）
 COST_BASE = 56                                         # 前三排固定占用：16×2 + 12×2
 COST_CAP = 113                                         # 队伍 cost 上限
-EQUIP_COST = 12                                        # 每件礼装占的 cost
-SLOTS = 2                                              # 可竞争的两个礼装槽
-N5_COST = 21                                           # 恰好 3 个 3★ 时才触发第 3 件 +5% 礼装
-N5_BONUS = 0.05
+EQUIP_COST = 12                                        # 12 cost 的后排礼装：具名 +20%，或泛用 +5%
+CHEAP_COST = 9                                         # 9 cost 的泛用后排礼装
+CHEAP_BONUS = 0.02                                     # 9 cost 礼装的全队加成
+SLOTS = 2                                              # 具名 +20% 礼装最多两件
+MAX_BACK_CE = 3                                        # 后排礼装最多三件
+NAMED_CE = 6                                           # 前 6 列是具名 +20%
+N5_COST = 21                                           # 三个 7 cost 从者的 cost 和
+N5_BONUS = 0.05                                        # 12 cost 泛用礼装的全队加成
 AP_PER_RUN = 40                                        # 每场 AP
 AP_PER_APPLE = 146                                     # 每个金苹果换算 AP
 P3_WEIGHT = 1.0                                        # loss 里 P3 的权重（--p3-weight 可覆盖）
 R3_WEIGHT = 0.2                                        # loss 里 R3 的权重：户口浪费只作轻微修正
-RUNNER_BONUS = 0.2                                     # 每位陪跑练满后，全队固定区 +0.2
-RUNNER_FIXED_BONUS = FIXED_BONUS + 0.24                # 站前排天然多 0.24 的固定区
+RUNNER_BONUS = 0.2                                     # 孔明或山鲁佐德到绊 15，全队 +20%（含两人本人）
 RUNNERS = [                                            # 前排陪跑：不参与三人决策
     {"name": "诸葛孔明", "need": 6_531_154, "hits": [0, 0, 0, 0, 0, 1, 1, 1]},   # 迦勒底之晨 + 两个占位
     {"name": "山鲁佐德", "need": 8_238_356, "hits": [0, 0, 0, 1, 0, 0, 1, 1]},   # 献给幸福的新娘 + 两个占位
@@ -144,28 +153,80 @@ def load_inputs(path: Path, sheet_name: str) -> dict:
     }
 
 
-def evaluate(chosen: list[int], enabled: list[int], people: list[dict], coef: list[float],
+def ce_loadouts() -> list[dict]:
+    """从 12 件里选最多 3 件。相同泛用礼装是重复副本，收益相同的组合只留一份。
+
+    6 件 12 cost 户口 +20%，3 件 12 cost 全队 +5%，3 件 9 cost 全队 +2%。
+    C(25,3)×C(12,3)=506000 是只上满 3 人 3 礼装时的上限；少上的组合更小。
+    """
+    pool = [("named", j) for j in range(NAMED_CE)]
+    pool += [("five", i) for i in range(3)]
+    pool += [("two", i) for i in range(3)]
+    seen = {}
+    for count in range(MAX_BACK_CE + 1):
+        for combo in combinations(range(len(pool)), count):
+            named = []
+            five = two = 0
+            for index in combo:
+                kind, value = pool[index]
+                if kind == "named":
+                    named.append(value)
+                elif kind == "five":
+                    five += 1
+                else:
+                    two += 1
+            enabled = tuple(1 if j in named else 0 for j in range(NAMED_CE))
+            key = (enabled, five, two)
+            if key in seen:
+                continue
+            seen[key] = {
+                "enabled": enabled,
+                "five": five,
+                "two": two,
+                "equip_cost": EQUIP_COST * (len(named) + five) + CHEAP_COST * two,
+                "flat": N5_BONUS * five + CHEAP_BONUS * two,
+            }
+    return list(seen.values())
+
+
+def ce_bonus(hits: list[int], loadout: dict, coef: list[float]) -> float:
+    enabled = loadout["enabled"]
+    named = sum(hits[j] * enabled[j] * coef[j] for j in range(NAMED_CE))
+    return named + loadout["flat"]
+
+
+def format_equips(item: dict, labels: list[str], coef: list[float]) -> str:
+    enabled = item["enabled"]
+    parts = [
+        f"{labels[j]}(+{coef[j] * 100:g}%)" for j in range(NAMED_CE) if j < len(enabled) and enabled[j]
+    ]
+    if item.get("five"):
+        parts.append(f"+5%×{item['five']}（12 cost）")
+    if item.get("two"):
+        parts.append(f"+2%×{item['two']}（9 cost）")
+    return "、".join(parts) or "—"
+
+
+def evaluate(chosen: list[int], loadout: dict, people: list[dict], coef: list[float],
              demands: list[int], fixed_bonus: float = FIXED_BONUS) -> dict | None:
     cost_sum = sum(people[i]["cost"] for i in chosen)
-    n5 = 1 if cost_sum == N5_COST else 0
-    # 从者与礼装共用同一份 cost 额度：前三排固定 56，剩下 113-56=57 给「我方从者 + 礼装」，
-    # 每少挂一件礼装就腾出 12 cost，所以「3 人 + 1 礼装」常常打得过「2 人 + 2 礼装」
-    equip_count = sum(enabled) + n5
+    # 从者与礼装共用同一份 cost 额度：前排固定 56，剩下 113-56=57 给「后排从者 + 后排礼装」。
+    equip_cost = loadout["equip_cost"]
     budget = COST_CAP - COST_BASE
-    if cost_sum + EQUIP_COST * equip_count > budget:
+    if cost_sum + equip_cost > budget:
         return None
     gains, ratios = [], []
     for i in chosen:
-        bonus = sum(people[i]["hits"][j] * enabled[j] * coef[j] for j in range(len(coef)))
-        gain = BASE_BOND * (fixed_bonus + n5 * N5_BONUS + bonus)
+        gain = BASE_BOND * (fixed_bonus + ce_bonus(people[i]["hits"], loadout, coef))
         gains.append(gain)
         ratios.append(gain / demands[i] if demands[i] > 0 else 0.0)
     slowest = max(ratios)
     runs = math.ceil(1 / slowest) if slowest else 0
     ideal = fixed_bonus + 0.05 + 0.4
     p3 = sum(gains) / (3 * BASE_BOND * ideal)
-    hit20 = sum(people[i]["hits"][j] for i in chosen for j in range(6))
-    used20 = sum(people[i]["hits"][j] * enabled[j] for i in chosen for j in range(6))
+    enabled = loadout["enabled"]
+    hit20 = sum(people[i]["hits"][j] for i in chosen for j in range(NAMED_CE))
+    used20 = sum(people[i]["hits"][j] * enabled[j] for i in chosen for j in range(NAMED_CE))
     r3 = (hit20 - used20) / (hit20 + 0.01) if hit20 else 0.0
     pushed = sum(min(gain * runs, demands[i]) for gain, i in zip(gains, chosen))
     return {
@@ -176,9 +237,13 @@ def evaluate(chosen: list[int], enabled: list[int], people: list[dict], coef: li
         "throughput": pushed / runs if runs else 0.0,
         "pushed": pushed,
         "cost": cost_sum,
-        "equip_count": equip_count,
-        "total_cost": COST_BASE + cost_sum + EQUIP_COST * equip_count,
-        "n5": n5,
+        "equip_count": sum(enabled) + loadout["five"] + loadout["two"],
+        "equip_cost": equip_cost,
+        "total_cost": COST_BASE + cost_sum + equip_cost,
+        "n5": 0,
+        "five": loadout["five"],
+        "two": loadout["two"],
+        "flat": loadout["flat"],
         "gains": gains,
         "enabled": enabled,
         "chosen": chosen,
@@ -214,11 +279,11 @@ def solve_round(people: list[dict], alive: list[int], coef: list[float], demands
     """
     best = None
     best_key = None
-    combos = equip_combinations(len(coef))
+    loadouts = ce_loadouts()
     for size in range(min(3, len(alive)), 0, -1):
         for chosen in combinations(alive, size):
-            for enabled in combos:
-                result = evaluate(list(chosen), enabled, people, coef, demands, fixed_bonus)
+            for loadout in loadouts:
+                result = evaluate(list(chosen), loadout, people, coef, demands, fixed_bonus)
                 if result is None:
                     continue
                 if rule == "throughput":
@@ -226,11 +291,11 @@ def solve_round(people: list[dict], alive: list[int], coef: list[float], demands
                         key = (-round(result["throughput"], 6), -result["cost"], result["runs"])
                     else:
                         key = (-round(result["throughput"], 6), result["runs"],
-                               -round(max(runner_gain(r, result["enabled"], coef) for r in RUNNERS), 6),
+                               -round(max(runner_gain(r, result["enabled"], coef, fixed_bonus, result["flat"]) for r in RUNNERS), 6),
                                result["loss"])
                 else:
                     key = (round(result["loss"], 9), result["runs"],
-                           -round(max(runner_gain(r, result["enabled"], coef) for r in RUNNERS), 6))
+                           -round(max(runner_gain(r, result["enabled"], coef, fixed_bonus, result["flat"]) for r in RUNNERS), 6))
                 if best_key is None or key < best_key:
                     best_key, best = key, result
     return best
@@ -270,8 +335,12 @@ def greedy_plan(people: list[dict], coef: list[float], rule: str,
             "enabled": step["enabled"],
             "cost": step["cost"],
             "equip_count": step["equip_count"],
+            "equip_cost": step["equip_cost"],
             "total_cost": step["total_cost"],
             "n5": step["n5"],
+            "five": step["five"],
+            "two": step["two"],
+            "flat": step["flat"],
             "runs": runs,
             "p3": step["p3"],
             "r3": step["r3"],
@@ -315,9 +384,9 @@ def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: in
     import random
 
     rng = random.Random(seed)
-    combos = equip_combinations(len(coef))
+    loadouts = ce_loadouts()
     bonus_table = [
-        [sum(people[i]["hits"][j] * en[j] * coef[j] for j in range(len(coef))) for en in combos]
+        [ce_bonus(people[i]["hits"], loadout, coef) for loadout in loadouts]
         for i in range(len(people))
     ]
     needs = [p["need"] for p in people]
@@ -331,12 +400,10 @@ def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: in
         for size in range(min(3, len(alive)), 0, -1):
             for chosen in combinations(alive, size):
                 cost = sum(people[i]["cost"] for i in chosen)
-                n5 = 1 if cost == N5_COST else 0
-                for k, en in enumerate(combos):
-                    equip_count = sum(en) + n5
-                    if cost + EQUIP_COST * equip_count > COST_CAP - COST_BASE:
+                for k, loadout in enumerate(loadouts):
+                    if cost + loadout["equip_cost"] > COST_CAP - COST_BASE:
                         continue
-                    gains = [BASE_BOND * (fixed + n5 * N5_BONUS + bonus_table[i][k]) for i in chosen]
+                    gains = [BASE_BOND * (fixed + bonus_table[i][k]) for i in chosen]
                     ratios = [g / needs[i] if needs[i] > 0 else 0.0 for g, i in zip(gains, chosen)]
                     runs = math.ceil(1 / max(ratios)) if max(ratios) else 0
                     if runs <= 0:
@@ -344,9 +411,11 @@ def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: in
                     pushed = sum(min(g * runs, needs[i]) for g, i in zip(gains, chosen))
                     candidates.append(
                         ((-round(pushed / runs, 6), runs),
-                         {"chosen": list(chosen), "enabled": en, "gains": gains, "runs": runs, "n5": n5,
-                          "cost": cost, "equip_count": equip_count,
-                          "total_cost": COST_BASE + cost + EQUIP_COST * equip_count})
+                         {"chosen": list(chosen), "enabled": loadout["enabled"], "gains": gains, "runs": runs,
+                          "n5": 0, "five": loadout["five"], "two": loadout["two"], "flat": loadout["flat"],
+                          "cost": cost, "equip_count": sum(loadout["enabled"]) + loadout["five"] + loadout["two"],
+                          "equip_cost": loadout["equip_cost"],
+                          "total_cost": COST_BASE + cost + loadout["equip_cost"]})
                     )
             if candidates:
                 break
@@ -357,7 +426,7 @@ def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: in
         chosen = step["chosen"]
         runs = step["runs"]
         before = {i: needs[i] for i in chosen}
-        meta = evaluate(chosen, step["enabled"], people, coef, needs, fixed) or {}
+        meta = evaluate(chosen, step, people, coef, needs, fixed) or {}
         leftover, graduated = {}, []
         for index, i in enumerate(chosen):
             needs[i] -= step["gains"][index] * runs
@@ -372,8 +441,12 @@ def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: in
             "enabled": step["enabled"],
             "cost": step["cost"],
             "equip_count": step["equip_count"],
+            "equip_cost": step["equip_cost"],
             "total_cost": step["total_cost"],
             "n5": step["n5"],
+            "five": step["five"],
+            "two": step["two"],
+            "flat": step["flat"],
             "runs": runs,
             "gains": step["gains"],
             "before": before,
@@ -402,18 +475,25 @@ def randomized_greedy(people: list[dict], coef: list[float], seed: int, topk: in
     }
 
 
-def runner_gain(runner: dict, enabled: list[int], coef: list[float]) -> float:
-    """陪跑者单场收益：前排固定区 2.08 + 她命中的已启用礼装。"""
-    bonus = sum(runner["hits"][j] * enabled[j] * coef[j] for j in range(len(coef)))
-    return BASE_BOND * (RUNNER_FIXED_BONUS + bonus)
+def runner_gain(runner: dict, enabled: list[int], coef: list[float],
+                back_fixed: float = BACK_FIXED, flat: float = 0.0) -> float:
+    """陪跑者单场收益：当前前排固定区 + 她命中的已启用礼装 + 泛用礼装。
+
+    前排比后排多 0.2。每有一人到绊 15，back_fixed 就加 0.2，前排跟着变成 2.14、2.34。
+    """
+    bonus = sum(runner["hits"][j] * enabled[j] * coef[j] for j in range(len(enabled))) + flat
+    return BASE_BOND * (back_fixed + FRONT_POSITION + bonus)
 
 
 def apply_runners(lefts: list[float], runs: int, enabled: list[int], coef: list[float],
                   fixed: float, item: dict) -> float:
-    """推进陪跑进度；有人练满就抬升固定区，返回新的 fixed。"""
+    """推进陪跑进度；有人练满就抬升全队固定区，返回新的后排固定区。
+
+    这一轮里两个人都按进来时的固定区结算，毕业加成从下一轮才开始。
+    """
     for index, runner in enumerate(RUNNERS):
         if lefts[index] > 0:
-            lefts[index] -= runs * runner_gain(runner, enabled, coef)
+            lefts[index] -= runs * runner_gain(runner, enabled, coef, fixed, item.get("flat", 0.0))
             if lefts[index] <= 0:
                 fixed += RUNNER_BONUS
                 item.setdefault("runner_graduated", []).append(runner["name"])
@@ -427,18 +507,19 @@ def reorder_for_runner(people: list[dict], coef: list[float], rounds: list[dict]
     每轮用「原解里该轮的输入缺口」重算场次——陪跑毕业之后 fixed 会抬升，
     这些轮次的场次因此缩短；阵容与决策不改变。
     """
-    def total_runner_gain(enabled: list[int]) -> float:
-        return sum(runner_gain(r, enabled, coef) for r in RUNNERS)
-
-    order = sorted(rounds, key=lambda item: -(total_runner_gain(item["enabled"]) * item["runs"]))
     lefts = [float(r["need"]) for r in RUNNERS] if runner_needs is None else [float(v) for v in runner_needs]
     fixed = FIXED_BONUS + RUNNER_BONUS * sum(1 for v in lefts if v <= 0)
+
+    def total_runner_gain(item: dict) -> float:
+        return sum(runner_gain(r, item["enabled"], coef, fixed, item.get("flat", 0.0)) for r in RUNNERS)
+
+    order = sorted(rounds, key=lambda item: -(total_runner_gain(item) * item["runs"]))
     out = []
     for item in order:
         demands = [p["need"] for p in people]
         for i, value in item["before"].items():
             demands[i] = value
-        result = evaluate(item["chosen"], item["enabled"], people, coef, demands, fixed)
+        result = evaluate(item["chosen"], item, people, coef, demands, fixed)
         if result is None or result["runs"] <= 0:
             continue
         runs = result["runs"]
@@ -559,9 +640,7 @@ def render_section(entry: dict, people: list[dict], coef: list[float], labels: l
             f"{'<span class=done>毕业</span>' if item['leftover'][i] <= 0 else ''}</li>"
             for k, i in enumerate(item["chosen"])
         )
-        equips = "、".join(
-            f"{html.escape(labels[j])}(+{coef[j] * 100:g}%)" for j in range(len(coef)) if item["enabled"][j]
-        ) or "—"
+        equips = html.escape(format_equips(item, labels, coef))
         rows.append(
             f"""
           <details class=round{' open' if item['index'] <= 2 else ''}>
@@ -608,8 +687,287 @@ def render_section(entry: dict, people: list[dict], coef: list[float], labels: l
       </section>"""
 
 
+def _coverage_configs(people: list[dict], coef: list[float]) -> list[dict]:
+    """枚举合法队伍。同一组人、同一套礼装收益只留一份。"""
+    raw = []
+    loadouts = ce_loadouts()
+    budget = COST_CAP - COST_BASE
+    for size in range(1, 4):
+        for chosen in combinations(range(len(people)), size):
+            cost = sum(people[i]["cost"] for i in chosen)
+            for loadout in loadouts:
+                if cost + loadout["equip_cost"] > budget:
+                    continue
+                bonuses = [ce_bonus(people[i]["hits"], loadout, coef) for i in chosen]
+                runner_ce = [ce_bonus(runner["hits"], loadout, coef) for runner in RUNNERS]
+                raw.append(
+                    {
+                        "chosen": chosen,
+                        "enabled": loadout["enabled"],
+                        "cost": cost,
+                        "n5": 0,
+                        "five": loadout["five"],
+                        "two": loadout["two"],
+                        "flat": loadout["flat"],
+                        "equip_count": sum(loadout["enabled"]) + loadout["five"] + loadout["two"],
+                        "equip_cost": loadout["equip_cost"],
+                        "bonuses": bonuses,
+                        "runner_ce": runner_ce,
+                    }
+                )
+    unique = {}
+    for cfg in raw:
+        key = (
+            cfg["chosen"],
+            tuple(round(b, 6) for b in cfg["bonuses"]),
+            cfg["n5"],
+            tuple(round(v, 4) for v in cfg["runner_ce"]),
+        )
+        unique[key] = cfg
+    return list(unique.values())
+
+
+def solve_coverage(people: list[dict], coef: list[float]) -> dict:
+    """按绊 15 的全队加成切段，选总场次更少的一种。
+
+    孔明缺口更小，且每场两人都在，所以他先到绊 15。山鲁佐德到绊 15 会再给全队 +20%。
+    这一档可有可无：只有它能把总场次压下去时才采用。
+    """
+    import numpy as np
+    from scipy.optimize import LinearConstraint, linprog, milp
+
+    configs = _coverage_configs(people, coef)
+    # (标题, 后排, 前排, 这档孔明还在冲绊, 这档山鲁佐德还在冲绊)
+    after_kong = [
+        ("孔明未到绊15", BACK_FIXED, FRONT_FIXED, True, True),
+        ("孔明已到绊15", BACK_FIXED + RUNNER_BONUS, FRONT_FIXED + RUNNER_BONUS, False, True),
+    ]
+    after_both = after_kong + [
+        ("两人都到绊15", BACK_FIXED + 2 * RUNNER_BONUS, FRONT_FIXED + 2 * RUNNER_BONUS, False, False),
+    ]
+    only_kong = _solve_stages(configs, people, after_kong, require_sche=False, np=np, linprog=linprog, milp=milp, LinearConstraint=LinearConstraint)
+    both = _solve_stages(configs, people, after_both, require_sche=True, np=np, linprog=linprog, milp=milp, LinearConstraint=LinearConstraint)
+    if both["finished"] and both["total_runs"] < only_kong["total_runs"]:
+        both["note"] = "山鲁佐德也刷到绊 15，后排固定区再到 2.14，总场次更低，所以采用这一档。"
+        return both
+    only_kong["note"] = (
+        f"山鲁佐德到绊 15 会再给全队 +20%（后排 2.14）。"
+        f"把她也刷满要 {both['total_runs']} 场，不比现在少，所以这版不强制她到绊 15。"
+        if both["finished"] else
+        "山鲁佐德到绊 15 会再给全队 +20%。这一档没有找到更低的整数解，所以不强制她到绊 15。"
+    )
+    return only_kong
+
+
+def _solve_stages(configs, people, stages, require_sche, np, linprog, milp, LinearConstraint) -> dict:
+    """stages 里每一档各有一套场次变量。孔明的缺口只由 count_kong 的档覆盖。"""
+    need = np.array([p["need"] for p in people], dtype=float)
+    n_people = len(people)
+    n = len(configs)
+    phase_count = len(stages)
+
+    def block(cfgs: list[dict], back: float) -> np.ndarray:
+        out = np.zeros((n_people, len(cfgs)))
+        for col, cfg in enumerate(cfgs):
+            for person, bonus in zip(cfg["chosen"], cfg["bonuses"]):
+                out[person, col] = BASE_BOND * (back + cfg["n5"] * N5_BONUS + bonus)
+        return out
+
+    def runner_row(cfgs: list[dict], runner_index: int, which) -> np.ndarray:
+        row = np.zeros(phase_count * len(cfgs))
+        width = len(cfgs)
+        for phase, stage in enumerate(stages):
+            if not which(stage):
+                continue
+            front = stage[2]
+            row[phase * width:(phase + 1) * width] = [
+                BASE_BOND * (front + cfg["runner_ce"][runner_index]) for cfg in cfgs
+            ]
+        return row
+
+    cover = np.concatenate([block(configs, stage[1]) for stage in stages], axis=1)
+    system = np.vstack([cover, runner_row(configs, 0, lambda stage: stage[3])])
+    lower_list = [need, np.array([RUNNERS[0]["need"]])]
+    if require_sche:
+        system = np.vstack([system, runner_row(configs, 1, lambda stage: stage[4])])
+        lower_list.append(np.array([RUNNERS[1]["need"]]))
+    lower = np.concatenate(lower_list)
+    relaxed = linprog(
+        np.ones(system.shape[1]), A_ub=-system, b_ub=-lower, bounds=(0, None), method="highs",
+    )
+    if not relaxed.success:
+        return _empty_coverage(stages, float("inf"))
+
+    support = set()
+    for phase in range(phase_count):
+        support |= set(np.flatnonzero(relaxed.x[phase * n:(phase + 1) * n] > 1e-6))
+    sub = [configs[i] for i in sorted(support)]
+    width = len(sub)
+    packed_cover = np.concatenate([block(sub, stage[1]) for stage in stages], axis=1)
+    packed = np.vstack([packed_cover, runner_row(sub, 0, lambda stage: stage[3])])
+    packed_lower = [need, np.array([RUNNERS[0]["need"]])]
+    if require_sche:
+        packed = np.vstack([packed, runner_row(sub, 1, lambda stage: stage[4])])
+        packed_lower.append(np.array([RUNNERS[1]["need"]]))
+    packed_lower = np.concatenate(packed_lower)
+    solved = milp(
+        c=np.ones(packed.shape[1]),
+        constraints=LinearConstraint(packed, packed_lower, np.full(packed.shape[0], np.inf)),
+        integrality=np.ones(packed.shape[1], dtype=int),
+        bounds=(0, 3000),
+        options={"time_limit": 45},
+    )
+    if solved.x is None:
+        return _empty_coverage(stages, float(relaxed.fun))
+    runs = np.rint(solved.x).astype(int)
+    return _materialize(sub, people, stages, runs, need, float(relaxed.fun), require_sche)
+
+
+def _empty_coverage(stages, lower_bound: float) -> dict:
+    return {
+        "total_runs": 10**9,
+        "total_ap": 0,
+        "apples": 0,
+        "lower_bound": lower_bound,
+        "finished": False,
+        "phases": [],
+        "kong_left": float(RUNNERS[0]["need"]),
+        "sche_left": float(RUNNERS[1]["need"]),
+    }
+
+
+def _materialize(sub, people, stages, runs, need, lower_bound: float, require_sche: bool) -> dict:
+    width = len(sub)
+    remain = need.astype(float).copy()
+    kong = float(RUNNERS[0]["need"])
+    sche = float(RUNNERS[1]["need"])
+    phase_plans = []
+    for phase, stage in enumerate(stages):
+        title, back, front, count_kong, count_sche = stage
+        count = runs[phase * width:(phase + 1) * width]
+        segments = []
+        order = sorted((i for i in range(width) if count[i] > 0), key=lambda i: -int(count[i]))
+        for i in order:
+            cfg = sub[i]
+            step = int(count[i])
+            gains = [
+                BASE_BOND * (back + cfg["n5"] * N5_BONUS + bonus)
+                for bonus in cfg["bonuses"]
+            ]
+            before = {person: remain[person] for person in cfg["chosen"]}
+            graduated = []
+            for person, gain in zip(cfg["chosen"], gains):
+                remain[person] -= gain * step
+                if remain[person] <= 1e-4:
+                    remain[person] = 0.0
+                    graduated.append(person)
+            kong_gain = BASE_BOND * (front + cfg["runner_ce"][0]) * step
+            sche_gain = BASE_BOND * (front + cfg["runner_ce"][1]) * step
+            if count_kong:
+                kong = max(0.0, kong - kong_gain)
+            if count_sche:
+                sche = max(0.0, sche - sche_gain)
+            segments.append(
+                {
+                    "runs": step,
+                    "chosen": list(cfg["chosen"]),
+                    "gains": gains,
+                    "enabled": list(cfg["enabled"]),
+                    "cost": cfg["cost"],
+                    "total_cost": COST_BASE + cfg["cost"] + cfg["equip_cost"],
+                    "n5": cfg["n5"],
+                    "five": cfg["five"],
+                    "two": cfg["two"],
+                    "before": before,
+                    "leftover": {person: remain[person] for person in cfg["chosen"]},
+                    "graduated": graduated,
+                    "kong_gain": kong_gain,
+                    "sche_gain": sche_gain,
+                }
+            )
+        if not segments:
+            continue
+        phase_plans.append(
+            {
+                "title": title,
+                "fixed": back,
+                "front": front,
+                "runs": int(count.sum()),
+                "segments": segments,
+            }
+        )
+    import numpy as np
+    total = int(runs.sum())
+    return {
+        "total_runs": total,
+        "total_ap": total * AP_PER_RUN,
+        "apples": math.ceil(total * AP_PER_RUN / AP_PER_APPLE),
+        "lower_bound": lower_bound,
+        "finished": bool(np.all(remain <= 1e-4) and kong <= 1 and (sche <= 1 or not require_sche)),
+        "phases": phase_plans,
+        "kong_left": kong,
+        "sche_left": sche,
+    }
+
+
+def render_coverage(plan: dict, people: list[dict], coef: list[float], labels: list[str]) -> str:
+    blocks = []
+    serial = 0
+    for phase in plan["phases"]:
+        rows = []
+        for item in phase["segments"]:
+            serial += 1
+            crew = "".join(
+                f"<li><b>{html.escape(people[i]['name'])}</b>"
+                f"<span class=cost>{people[i]['cost']} cost</span>"
+                f"<span class=gain>+{fmt(item['gains'][k])}/场</span>"
+                f"<span class=need>{fmt(item['before'][i])} → {fmt(max(0.0, item['leftover'][i]))}</span>"
+                f"{'<span class=done>毕业</span>' if item['leftover'][i] <= 0 else ''}</li>"
+                for k, i in enumerate(item["chosen"])
+            )
+            equips = html.escape(format_equips(item, labels, coef))
+            rows.append(
+                f"""
+          <details class=round{' open' if serial <= 2 else ''}>
+            <summary>
+              <span class=rno>第 {serial} 段</span>
+              <span class=runs>{item['runs']} 场</span>
+              <span class=size>{len(item['chosen'])} 人</span>
+              <span class=meta>cost {item['total_cost']}{' · 第 3 件 +5%' if item['n5'] else ''}</span>
+            </summary>
+            <div class=body>
+              <ul class=crew>{crew}</ul>
+              <p class=equip>礼装：{equips}　<span class=dim>孔明 +{fmt(item['kong_gain'])}　山鲁佐德 +{fmt(item['sche_gain'])}</span></p>
+            </div>
+          </details>"""
+            )
+        blocks.append(
+            f"<p class=sub2 style=\"color:#1f2430;font-weight:600;margin-top:14px\">"
+            f"{html.escape(phase['title'])}　前排 {phase['front']:.2f}　后排 {phase['fixed']:.2f}　"
+            f"{phase['runs']} 场　{len(phase['segments'])} 段</p>"
+            + "".join(rows)
+        )
+    status = "25 人全部盖满" if plan["finished"] else "仍有缺口"
+    return f"""
+      <section class=panel>
+        <h2>全局覆盖 <span class=dim>（按绊 15 的全队加成分段）</span></h2>
+        <p class=sub2>前排礼装给全队 +70%，全队自带 +4%，站前排再 +20%。孔明和山鲁佐德因此是 1.94，后排 25 人是 1.74。两人冲的都是绊 15，各自满了之后全队再 +20%。后排从 12 件里任选最多 3 件：6 件 12 cost 户口 +20%，3 件 12 cost 全队 +5%，3 件 9 cost 全队 +2%。一个人的缺口可以拆给好几支队伍，同一段里的先后顺序不影响总数。</p>
+        <p class=sub2>{html.escape(plan.get("note") or "")}</p>
+        <div class=cards>
+          <div class=card><div class=k>总场次</div><div class=v>{plan['total_runs']}<span class=u>场</span></div></div>
+          <div class=card><div class=k>总 AP</div><div class=v>{plan['total_ap']:,}<span class=u>AP</span></div></div>
+          <div class=card><div class=k>金苹果</div><div class=v>{plan['apples']}<span class=u>个</span></div></div>
+          <div class=card><div class=k>分数下界</div><div class=v>{math.ceil(plan['lower_bound'] - 1e-6)}<span class=u>场</span></div></div>
+          <div class=card><div class=k>孔明</div><div class=v class=small>{"已到绊15" if plan["kong_left"] <= 1 else "还差 " + fmt(plan["kong_left"])}</div></div>
+          <div class=card><div class=k>山鲁佐德</div><div class=v class=small>{"已到绊15" if plan["sche_left"] <= 1 else "还差 " + fmt(plan["sche_left"])}</div></div>
+          <div class=card><div class=k>状态</div><div class=v>{status}</div></div>
+        </div>
+        {''.join(blocks)}
+      </section>"""
+
+
 def render_html(people: list[dict], coef: list[float], labels: list[str], plans: list[dict],
-                source: str) -> str:
+                source: str, coverage: dict | None = None) -> str:
     total_need = sum(p["need"] for p in people)
     compare = "".join(
         f"<tr><td>{html.escape(RULES[entry['rule']][0])}</td>"
@@ -620,6 +978,15 @@ def render_html(people: list[dict], coef: list[float], labels: list[str], plans:
         for entry in plans
     )
     sections = "".join(render_section(entry, people, coef, labels) for entry in plans)
+    if coverage:
+        segments = sum(len(phase["segments"]) for phase in coverage["phases"])
+        compare += (
+            f"<tr><td>全局覆盖</td><td>{segments} 段</td>"
+            f"<td>{coverage['total_runs']}</td>"
+            f"<td>{coverage['total_ap']:,}</td>"
+            f"<td>{coverage['apples']}</td></tr>"
+        )
+        sections += render_coverage(coverage, people, coef, labels)
     return f"""<!DOCTYPE html>
 <html lang=zh-CN>
 <head>
@@ -632,7 +999,7 @@ def render_html(people: list[dict], coef: list[float], labels: list[str], plans:
   <h1>Caster 绊 9 贪心方案</h1>
   <div class=sub>数据源：{html.escape(source)} → Sheet4（{len(people)} 名候选，总缺口 {total_need:,}）　·　
     单轮约束：≤3 人 + 2 个礼装槽 + cost {COST_CAP}　·　{AP_PER_RUN} AP/场，{AP_PER_APPLE} AP/果<br>
-    前排陪跑：{'、'.join(f"{r['name']}（剩余 {r['need']:,}）" for r in RUNNERS)}，每人练满后固定区 +{RUNNER_BONUS:.2f}</div>
+    前排陪跑：{'、'.join(f"{r['name']}（剩余 {r['need']:,}）" for r in RUNNERS)}。前排礼装 +70% 与自带 +4% 给全队，站前排再 +20%；两人各到绊 15 再给全队 +20%</div>
   <table class=cmp>
     <thead><tr><th>准则</th><th>轮次</th><th>总场次</th><th>总 AP</th><th>金苹果</th></tr></thead>
     <tbody>{compare}</tbody>
@@ -699,8 +1066,10 @@ def main() -> None:
             plan = finalize(base["rounds"], base["needs"], rule, base.get("runner_lefts"))
         entries.append({"rule": rule, "plan": plan})
 
+    coverage = solve_coverage(people, coef)
     args.output.write_text(
-        render_html(people, coef, labels, entries, f"{args.input.name}/{args.sheet}"), encoding="utf-8"
+        render_html(people, coef, labels, entries, f"{args.input.name}/{args.sheet}", coverage),
+        encoding="utf-8",
     )
     if args.json:
         args.json.write_text(
@@ -719,10 +1088,12 @@ def main() -> None:
         print(f"   队伍人数：{sizes}；未上满 {len(plan['underfilled'])} 轮")
         for item in plan["rounds"]:
             crew = " / ".join(people[i]["name"] for i in item["chosen"])
-            equips = "、".join(labels[j] for j in range(len(coef)) if item["enabled"][j]) or "—"
+            equips = format_equips(item, labels, coef)
             done = "、".join(people[i]["name"] for i in item["graduated"])
             print(f"  R{item['index']:>2} {item['runs']:>3} 场 cost {item['cost']:>2} | {crew} | {equips} | 毕业: {done}")
         print()
+    print(f"[coverage] {coverage['total_runs']} 场，AP {coverage['total_ap']:,}，金苹果 {coverage['apples']}，"
+          f"{'全部盖满' if coverage['finished'] else '仍有缺口'}")
     print(f"已写出 {args.output}")
 
 
